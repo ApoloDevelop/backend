@@ -225,6 +225,12 @@ model review {
   @@index([user_id], map: "user_id")
 }
 
+model role {
+  id   Int       @id @default(autoincrement())
+  name role_name
+  user user[]
+}
+
 model subgenre {
   id             Int              @id @default(autoincrement())
   NAME           String           @db.VarChar(50)
@@ -278,34 +284,34 @@ model track_artist {
 }
 
 model user {
-  id                                  Int             @id @default(autoincrement())
-  fullname                            String          @db.VarChar(255)
-  username                            String          @unique(map: "nombre_usuario") @db.VarChar(255)
-  email                               String          @unique(map: "correo") @db.VarChar(255)
-  password                            String          @db.VarChar(255)
-  birthdate                           DateTime        @db.Date
-  country                             String?         @db.VarChar(255)
-  city                                String?         @db.VarChar(255)
-  phone                               String?         @db.VarChar(20)
-  spotify_link                        String?         @db.VarChar(255)
-  biography                           String?         @db.Text
-  profile_pic                         String?         @db.VarChar(255)
-  cover_pic                           String?         @db.VarChar(255)
-  register_date                       DateTime        @default(now()) @db.Timestamp(0)
-  verified                            Boolean         @default(false)
-  auth_strategy                       String?         @db.VarChar(50)
-  user_type                           Int
-  article                             article[]
-  comment                             comment[]
-  favorite_favorite_userTouser        favorite[]      @relation("favorite_userTouser")
-  follow_follow_seguidor_idTouser     follow[]        @relation("follow_seguidor_idTouser")
-  follow_follow_seguido_idTouser      follow[]        @relation("follow_seguido_idTouser")
-  review                              review[]
-  user_type_user_user_typeTouser_type user_type       @relation("user_user_typeTouser_type", fields: [user_type], references: [id], onUpdate: Restrict, map: "user_ibfk_1")
-  user_activity                       user_activity[]
-  votes                               votes[]
+  id                              Int             @id @default(autoincrement())
+  fullname                        String          @db.VarChar(255)
+  username                        String          @unique(map: "nombre_usuario") @db.VarChar(255)
+  email                           String          @unique(map: "correo") @db.VarChar(255)
+  password                        String          @db.VarChar(255)
+  birthdate                       DateTime        @db.Date
+  country                         String?         @db.VarChar(255)
+  city                            String?         @db.VarChar(255)
+  phone                           String?         @unique(map: "unique_phone") @db.VarChar(20)
+  spotify_link                    String?         @db.VarChar(255)
+  biography                       String?         @db.Text
+  profile_pic                     String?         @db.VarChar(255)
+  cover_pic                       String?         @db.VarChar(255)
+  register_date                   DateTime        @default(now()) @db.Timestamp(0)
+  verified                        Boolean         @default(false)
+  auth_strategy                   String?         @db.VarChar(50)
+  role_id                         Int             @default(5)
+  article                         article[]
+  comment                         comment[]
+  favorite_favorite_userTouser    favorite[]      @relation("favorite_userTouser")
+  follow_follow_seguidor_idTouser follow[]        @relation("follow_seguidor_idTouser")
+  follow_follow_seguido_idTouser  follow[]        @relation("follow_seguido_idTouser")
+  review                          review[]
+  role                            role            @relation(fields: [role_id], references: [id], onUpdate: Restrict, map: "user_ibfk_1")
+  user_activity                   user_activity[]
+  votes                           votes[]
 
-  @@index([user_type], map: "user_type")
+  @@index([role_id], map: "user_type")
 }
 
 model user_activity {
@@ -320,12 +326,6 @@ model user_activity {
 
   @@index([item_id], map: "fk_item_activity")
   @@index([user_id], map: "user_id")
-}
-
-model user_type {
-  id                             Int    @id @default(autoincrement())
-  type                           String @db.VarChar(50)
-  user_user_user_typeTouser_type user[] @relation("user_user_typeTouser_type")
 }
 
 model venue {
@@ -375,4 +375,12 @@ enum venue_venue_type {
 enum comment_status {
   active
   deleted
+}
+
+enum role_name {
+  admin
+  mod
+  reader
+  writer
+  verified
 }
