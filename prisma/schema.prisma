@@ -363,6 +363,14 @@ enum item_item_type {
   genre
 }
 
+enum role_name {
+  admin
+  mod
+  reader
+  writer
+  verified
+}
+
 enum venue_venue_type {
   stadium
   arena
@@ -375,12 +383,4 @@ enum venue_venue_type {
 enum comment_status {
   active
   deleted
-}
-
-enum role_name {
-  admin
-  mod
-  reader
-  writer
-  verified
 }
