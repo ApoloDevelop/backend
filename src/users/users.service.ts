@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { user } from '@prisma/client';
+import { user as User } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAllUsers(): Promise<user[]> {
+  async findAllUsers(): Promise<User[]> {
     return this.prisma.user.findMany();
   }
 
@@ -18,25 +18,37 @@ export class UsersService {
   //   });
   // }
 
-  async findUserByEmail(email: string): Promise<user> {
+  async findUserByEmail(email: string): Promise<User> {
     return this.prisma.user.findUnique({
       where: { email: email },
     });
   }
 
-  async findUserByUsername(username: string): Promise<user> {
+  async findUserByUsername(username: string): Promise<User> {
     return this.prisma.user.findUnique({
       where: { username },
     });
   }
 
-  async findUserByPhone(phone: string): Promise<user> {
+  async findUserByPhone(phone: string): Promise<User> {
     return this.prisma.user.findUnique({
       where: { phone },
     });
   }
 
-  async createUser(CreateUserDto: CreateUserDto): Promise<user> {
+  async findUserByOauth(
+    provider: string,
+    oauthId: string,
+  ): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        auth_strategy: provider,
+        oauth_id: oauthId,
+      },
+    });
+  }
+
+  async createUser(CreateUserDto: CreateUserDto): Promise<User> {
     return this.prisma.user.create({
       data: CreateUserDto,
     });

@@ -2,7 +2,7 @@ export class CreateUserDto {
   fullname: string;
   username: string;
   email: string;
-  password: string;
+  password?: string;
   birthdate: Date;
   country?: string;
   city?: string;
@@ -13,4 +13,5 @@ export class CreateUserDto {
   cover_pic?: string;
   auth_strategy?: string;
   role_id?: number;
+  oauth_id?: string;
 }
