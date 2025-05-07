@@ -49,4 +49,19 @@ export class AuthController {
       `${process.env.FRONTEND_URL}/oauth-success?token=${token}`,
     );
   }
+
+  //Spotify Auth route
+  @Get('spotify')
+  @UseGuards(PassportAuthGuard('spotify'))
+  async spotifyAuth() {}
+
+  //Spotify Auth callback route
+  @Get('spotify/callback')
+  @UseGuards(PassportAuthGuard('spotify'))
+  async spotifyCallback(@Req() req: Request, @Res() res: Response) {
+    const { token } = await this.authService.oauthLogin(req.user);
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/oauth-success?token=${token}`,
+    );
+  }
 }

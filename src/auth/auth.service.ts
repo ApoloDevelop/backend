@@ -9,6 +9,7 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcryptjs from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import e from 'express';
 
 @Injectable()
 export class AuthService {
@@ -86,10 +87,8 @@ export class AuthService {
 
   //-----------OAUTH-------------------
   async oauthLogin(oauthUser: any): Promise<{ user: any; token: string }> {
-    let user = await this.usersService.findUserByOauth(
-      oauthUser.provider,
-      oauthUser.id,
-    );
+    const { email, username, ...rest } = oauthUser;
+    let user = await this.usersService.findUserByEmail(email);
 
     if (!user) {
       user = await this.usersService.createUser({
@@ -99,8 +98,6 @@ export class AuthService {
         username: oauthUser.username || oauthUser.email.split('@')[0],
         password: null,
         profile_pic: oauthUser.picture,
-        auth_strategy: oauthUser.provider,
-        oauth_id: oauthUser.oauthId,
         role_id: 5,
         birthdate: new Date(),
       });

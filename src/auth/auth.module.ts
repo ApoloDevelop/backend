@@ -5,10 +5,11 @@ import { UsersModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants/jwt.constant';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { SpotifyStrategy } from './strategies/spotify.strategy';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy],
+  providers: [AuthService, GoogleStrategy, SpotifyStrategy],
   imports: [
     UsersModule,
     JwtModule.register({

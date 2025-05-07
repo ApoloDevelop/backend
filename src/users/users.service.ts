@@ -36,18 +36,6 @@ export class UsersService {
     });
   }
 
-  async findUserByOauth(
-    provider: string,
-    oauthId: string,
-  ): Promise<User | null> {
-    return this.prisma.user.findFirst({
-      where: {
-        auth_strategy: provider,
-        oauth_id: oauthId,
-      },
-    });
-  }
-
   async createUser(CreateUserDto: CreateUserDto): Promise<User> {
     return this.prisma.user.create({
       data: CreateUserDto,
