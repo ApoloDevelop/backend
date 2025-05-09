@@ -60,10 +60,6 @@ export class RegisterDto {
   @IsOptional()
   cover_pic?: string;
 
-  @IsString()
-  @IsOptional()
-  auth_strategy?: string;
-
   @IsOptional()
   role_id?: number;
 }
