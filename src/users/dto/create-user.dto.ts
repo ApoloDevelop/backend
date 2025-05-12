@@ -11,7 +11,6 @@ export class CreateUserDto {
   biography?: string;
   profile_pic?: string;
   cover_pic?: string;
-  auth_strategy?: string;
   role_id?: number;
   oauth_id?: string;
 }
