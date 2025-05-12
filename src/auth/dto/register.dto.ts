@@ -5,6 +5,7 @@ import {
   IsInt,
   IsOptional,
   IsPhoneNumber,
+  IsPostalCode,
   IsString,
   IsStrongPassword,
   IsUrl,
@@ -59,6 +60,10 @@ export class RegisterDto {
   @IsUrl()
   @IsOptional()
   cover_pic?: string;
+
+  @IsPostalCode('any')
+  @IsOptional()
+  postal_code?: string;
 
   @IsOptional()
   role_id?: number;
