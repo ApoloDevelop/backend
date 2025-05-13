@@ -293,7 +293,6 @@ model user {
   birthdate                       DateTime        @db.Date
   country                         String?         @db.VarChar(255)
   city                            String?         @db.VarChar(255)
-  postalCode                      String?         @db.VarChar(20)
   phone                           String?         @unique(map: "unique_phone") @db.VarChar(20)
   spotify_link                    String?         @db.VarChar(255)
   biography                       String?         @db.Text
@@ -302,6 +301,7 @@ model user {
   register_date                   DateTime        @default(now()) @db.Timestamp(0)
   verified                        Boolean         @default(false)
   role_id                         Int             @default(5)
+  social_genre                    user_genre?
   article                         article[]
   comment                         comment[]
   favorite_favorite_userTouser    favorite[]      @relation("favorite_userTouser")
@@ -384,4 +384,11 @@ enum venue_venue_type {
 enum comment_status {
   active
   deleted
+}
+
+enum user_genre {
+  male
+  female
+  non_binary
+  other
 }

@@ -2,15 +2,21 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsDate,
   IsEmail,
-  IsInt,
+  IsEnum,
   IsOptional,
   IsPhoneNumber,
-  IsPostalCode,
   IsString,
   IsStrongPassword,
   IsUrl,
   MinLength,
 } from 'class-validator';
+
+export enum UserGenre {
+  Male = 'male',
+  Female = 'female',
+  NonBinary = 'non_binary',
+  Other = 'other',
+}
 
 export class RegisterDto {
   @IsString()
@@ -61,9 +67,9 @@ export class RegisterDto {
   @IsOptional()
   cover_pic?: string;
 
-  @IsPostalCode('any')
+  @IsEnum(UserGenre)
   @IsOptional()
-  postal_code?: string;
+  social_genre?: UserGenre;
 
   @IsOptional()
   role_id?: number;
