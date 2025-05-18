@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -32,9 +41,31 @@ export class UsersController {
     return this.usersService.findUserByPhone(phone);
   }
 
+  @Get('exists')
+  async checkIfExists(
+    @Query('email') email?: string,
+    @Query('username') username?: string,
+    @Query('phone') phone?: string,
+  ) {
+    const emailExists = email
+      ? await this.usersService.findUserByEmail(email)
+      : null;
+    const usernameExists = username
+      ? await this.usersService.findUserByUsername(username)
+      : null;
+    const phoneExists = phone
+      ? await this.usersService.findUserByPhone(phone)
+      : null;
+
+    return {
+      emailExists: !!emailExists,
+      usernameExists: !!usernameExists,
+      phoneExists: !!phoneExists,
+    };
+  }
+
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
-
 }
