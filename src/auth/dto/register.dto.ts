@@ -20,22 +20,32 @@ export enum UserGenre {
 
 export class RegisterDto {
   @IsString()
-  @MinLength(3)
+  @MinLength(3, {
+    message: 'El nombre completo debe tener al menos 3 caracteres',
+  })
   fullname: string;
 
-  @MinLength(3)
+  @MinLength(3, {
+    message: 'El nombre de usuario debe tener al menos 3 caracteres',
+  })
   @IsString()
   username: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: 'El correo electrónico no es válido' })
   email: string;
 
-  @IsStrongPassword()
-  @MinLength(8)
+  @IsStrongPassword(
+    {},
+    {
+      message:
+        'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo',
+    },
+  )
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   @Transform(({ value }) => value.trim())
   password: string;
 
-  @IsDate()
+  @IsDate({ message: 'La fecha de nacimiento no es válida' })
   @Type(() => Date)
   birthdate: Date;
 
@@ -47,7 +57,7 @@ export class RegisterDto {
   @IsOptional()
   city?: string;
 
-  @IsPhoneNumber()
+  @IsPhoneNumber(undefined, { message: 'El número de teléfono no es válido' })
   @IsOptional()
   phone?: string;
 
@@ -67,7 +77,7 @@ export class RegisterDto {
   @IsOptional()
   cover_pic?: string;
 
-  @IsEnum(UserGenre)
+  @IsEnum(UserGenre, { message: 'El género no es válido' })
   @IsOptional()
   social_genre?: UserGenre;
 
