@@ -42,15 +42,6 @@ export class UsersController {
     return this.usersService.findUserByPhone(phone);
   }
 
-  @Get(':username')
-  async getUserProfile(@Param('username') username: string) {
-    const user = await this.usersService.findUserByUsername(username);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
-
   @Get('exists')
   async checkIfExists(
     @Query('email') email?: string,
