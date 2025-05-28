@@ -57,7 +57,6 @@ export class RegisterDto {
   @IsOptional()
   city?: string;
 
-  @IsPhoneNumber(undefined, { message: 'El número de teléfono no es válido' })
   @IsOptional()
   phone?: string;
 
