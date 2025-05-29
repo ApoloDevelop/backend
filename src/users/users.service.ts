@@ -39,8 +39,22 @@ export class UsersService {
   }
 
   async createUser(CreateUserDto: CreateUserDto): Promise<User> {
+    const { phone, ...rest } = CreateUserDto;
+
+    // Normalizar el teléfono si está presente
+    const normalizedPhone = phone?.startsWith('+')
+      ? phone
+      : phone
+        ? `+${phone}`
+        : null;
+    const normalizedPhoneNoSpaces = normalizedPhone?.replace(/\s+/g, '');
+
+    // Crear el usuario sin incluir el campo `phone` si está vacío
     return this.prisma.user.create({
-      data: CreateUserDto,
+      data: {
+        ...rest,
+        ...(normalizedPhoneNoSpaces ? { phone: normalizedPhoneNoSpaces } : {}),
+      },
     });
   }
 
