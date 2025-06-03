@@ -3,11 +3,14 @@ import {
   IsDate,
   IsEmail,
   IsEnum,
+  IsLowercase,
   IsOptional,
   IsPhoneNumber,
   IsString,
   IsStrongPassword,
   IsUrl,
+  Matches,
+  MaxLength,
   MinLength,
 } from 'class-validator';
 
@@ -20,8 +23,8 @@ export enum UserGenre {
 
 export class RegisterDto {
   @IsString()
-  @MinLength(3, {
-    message: 'El nombre completo debe tener al menos 3 caracteres',
+  @MinLength(2, {
+    message: 'El nombre completo debe tener al menos 2 caracteres',
   })
   fullname: string;
 
@@ -29,9 +32,19 @@ export class RegisterDto {
     message: 'El nombre de usuario debe tener al menos 3 caracteres',
   })
   @IsString()
+  @IsLowercase({ message: 'El nombre de usuario debe estar en minúsculas' })
+  @MaxLength(30, {
+    message: 'El nombre de usuario no puede tener más de 30 caracteres',
+  })
+  @Matches(/^[a-z0-9_]+$/, {
+    message: 'El nombre de usuario no puede contener caracteres especiales',
+  })
   username: string;
 
   @IsEmail({}, { message: 'El correo electrónico no es válido' })
+  @Matches(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, {
+    message: 'El correo electrónico no tiene un formato válido',
+  })
   email: string;
 
   @IsStrongPassword(

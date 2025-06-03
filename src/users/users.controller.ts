@@ -22,24 +22,28 @@ export class UsersController {
     return this.usersService.findAllUsers();
   }
 
-  // @Get(':id')
-  // findUserById(@Param('id') id: string) {
-  //   return this.usersService.findUserById(id);
-  // }
+  @Get(':id')
+  async findUserById(@Param('id') id: string) {
+    const user = await this.usersService.findUserById(Number(id));
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
+  }
 
   @Get('email/:email')
-  findUserByEmail(@Param('email') email: string) {
-    return this.usersService.findUserByEmail(email);
+  async findUserByEmail(@Param('email') email: string) {
+    return await this.usersService.findUserByEmail(email);
   }
 
   @Get('username/:username')
-  findUserByUsername(@Param('username') username: string) {
-    return this.usersService.findUserByUsername(username);
+  async findUserByUsername(@Param('username') username: string) {
+    return await this.usersService.findUserByUsername(username);
   }
 
   @Get('phone/:phone')
-  findUserByPhone(@Param('phone') phone: string) {
-    return this.usersService.findUserByPhone(phone);
+  async findUserByPhone(@Param('phone') phone: string) {
+    return await this.usersService.findUserByPhone(phone);
   }
 
   @Get('exists')
@@ -68,5 +72,11 @@ export class UsersController {
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
+  }
+
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    console.log('Updating user with ID:', id);
+    return this.usersService.update(+id, updateUserDto);
   }
 }

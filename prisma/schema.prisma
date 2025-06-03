@@ -288,6 +288,7 @@ model user {
   id                              Int             @id @default(autoincrement())
   fullname                        String          @db.VarChar(255)
   username                        String          @unique(map: "nombre_usuario") @db.VarChar(255)
+  username_last_update            DateTime?       @db.Timestamp(0)
   email                           String          @unique(map: "correo") @db.VarChar(255)
   password                        String?         @db.VarChar(255)
   birthdate                       DateTime        @db.Date

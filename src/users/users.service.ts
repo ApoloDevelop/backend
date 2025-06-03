@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -12,11 +12,11 @@ export class UsersService {
     return this.prisma.user.findMany();
   }
 
-  // async findUserById(id: number): Promise<user> {
-  //   return this.prisma.user.findUnique({
-  //     where: {id}
-  //   });
-  // }
+  async findUserById(id: number): Promise<User> {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
 
   async findUserByEmail(email: string): Promise<User> {
     return this.prisma.user.findUnique({
@@ -58,8 +58,33 @@ export class UsersService {
     });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    console.log('hola');
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+    console.log('User found:', user);
+    if (!user) throw new BadRequestException('User not found');
+
+    if (updateUserDto.username && updateUserDto.username !== user.username) {
+      const lastUpdate = user.username_last_update;
+      const now = new Date();
+      if (lastUpdate) {
+        const diff = now.getTime() - new Date(lastUpdate).getTime();
+        const days = diff / (1000 * 60 * 60 * 24);
+        if (days < 30) {
+          throw new BadRequestException(
+            'Solo puedes cambiar tu nombre de usuario una vez cada 30 días.',
+          );
+        }
+      }
+      updateUserDto.username_last_updated = now;
+    }
+
+    return this.prisma.user.update({
+      where: { id },
+      data: updateUserDto,
+    });
   }
 
   remove(id: number) {
