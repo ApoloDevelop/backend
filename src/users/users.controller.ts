@@ -22,15 +22,6 @@ export class UsersController {
     return this.usersService.findAllUsers();
   }
 
-  @Get(':id')
-  async findUserById(@Param('id') id: string) {
-    const user = await this.usersService.findUserById(Number(id));
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return user;
-  }
-
   @Get('email/:email')
   async findUserByEmail(@Param('email') email: string) {
     return await this.usersService.findUserByEmail(email);
@@ -69,6 +60,16 @@ export class UsersController {
     };
   }
 
+  @Get(':id')
+  async findUserById(@Param('id') id: string) {
+    const numId = Number(id);
+    const user = await this.usersService.findUserById(numId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
+  }
+
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
@@ -76,7 +77,7 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    console.log('Updating user with ID:', id);
+    console.log('Body received for update:', updateUserDto);
     return this.usersService.update(+id, updateUserDto);
   }
 }

@@ -32,7 +32,7 @@ export class UsersService {
 
   async findUserByPhone(phone: string): Promise<User> {
     const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-    const normalizedPhoneNoSpaces = normalizedPhone.replace(/\s+/g, ''); // Elimina cualquier espacio adicional
+    const normalizedPhoneNoSpaces = normalizedPhone.replace(/\s+/g, '');
     return this.prisma.user.findUnique({
       where: { phone: normalizedPhoneNoSpaces },
     });
@@ -41,7 +41,6 @@ export class UsersService {
   async createUser(CreateUserDto: CreateUserDto): Promise<User> {
     const { phone, ...rest } = CreateUserDto;
 
-    // Normalizar el teléfono si está presente
     const normalizedPhone = phone?.startsWith('+')
       ? phone
       : phone
@@ -49,7 +48,6 @@ export class UsersService {
         : null;
     const normalizedPhoneNoSpaces = normalizedPhone?.replace(/\s+/g, '');
 
-    // Crear el usuario sin incluir el campo `phone` si está vacío
     return this.prisma.user.create({
       data: {
         ...rest,
@@ -59,11 +57,9 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    console.log('hola');
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
-    console.log('User found:', user);
     if (!user) throw new BadRequestException('User not found');
 
     if (updateUserDto.username && updateUserDto.username !== user.username) {
@@ -78,7 +74,7 @@ export class UsersService {
           );
         }
       }
-      updateUserDto.username_last_updated = now;
+      updateUserDto.username_last_update = now;
     }
 
     return this.prisma.user.update({
