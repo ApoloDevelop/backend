@@ -296,7 +296,7 @@ model user {
   city                            String?         @db.VarChar(255)
   phone                           String?         @unique(map: "unique_phone") @db.VarChar(20)
   spotify_link                    String?         @db.VarChar(255)
-  biography                       String?         @db.Text
+  biography                       String?         @db.VarChar(1500)
   profile_pic                     String?         @db.VarChar(255)
   cover_pic                       String?         @db.VarChar(255)
   register_date                   DateTime        @default(now()) @db.Timestamp(0)

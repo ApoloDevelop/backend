@@ -9,8 +9,6 @@ import { RegisterDto } from './dto/register.dto';
 import * as bcryptjs from 'bcryptjs';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
-import e from 'express';
-
 @Injectable()
 export class AuthService {
   constructor(

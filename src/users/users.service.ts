@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { user as User } from '@prisma/client';
+import * as bcryptjs from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -76,6 +77,10 @@ export class UsersService {
       }
       updateUserDto.username_last_update = now;
     }
+
+    const hashedPassword = await bcryptjs.hash(updateUserDto.password, 10);
+    updateUserDto.password = hashedPassword;
+    console.log('password hashed for update:', updateUserDto.password);
 
     return this.prisma.user.update({
       where: { id },

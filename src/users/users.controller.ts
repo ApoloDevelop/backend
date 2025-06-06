@@ -77,7 +77,6 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    console.log('Body received for update:', updateUserDto);
     return this.usersService.update(+id, updateUserDto);
   }
 }
