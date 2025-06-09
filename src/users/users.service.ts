@@ -78,8 +78,12 @@ export class UsersService {
       updateUserDto.username_last_update = now;
     }
 
-    const hashedPassword = await bcryptjs.hash(updateUserDto.password, 10);
-    updateUserDto.password = hashedPassword;
+    if (updateUserDto.password) {
+      updateUserDto.password = await bcryptjs.hash(updateUserDto.password, 10);
+    } else {
+      // Elimina el campo password si no se va a actualizar
+      delete updateUserDto.password;
+    }
 
     return this.prisma.user.update({
       where: { id },
