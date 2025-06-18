@@ -75,6 +75,22 @@ export class CreateUserDto {
   @IsOptional()
   spotify_link?: string;
 
+  @IsUrl()
+  @IsOptional()
+  youtube_link?: string;
+
+  @IsUrl()
+  @IsOptional()
+  twitter_link?: string;
+
+  @IsUrl()
+  @IsOptional()
+  instagram_link?: string;
+
+  @IsUrl()
+  @IsOptional()
+  external_url?: string;
+
   @IsString()
   @IsOptional()
   biography?: string;
