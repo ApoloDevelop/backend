@@ -33,9 +33,9 @@ export class UsersService {
 
   async findUserByPhone(phone: string): Promise<User> {
     const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-    const normalizedPhoneNoSpaces = normalizedPhone.replace(/\s+/g, '');
+    // const normalizedPhoneNoSpaces = normalizedPhone.replace(/\s+/g, '');
     return this.prisma.user.findUnique({
-      where: { phone: normalizedPhoneNoSpaces },
+      where: { phone: normalizedPhone },
     });
   }
 
@@ -47,12 +47,12 @@ export class UsersService {
       : phone
         ? `+${phone}`
         : null;
-    const normalizedPhoneNoSpaces = normalizedPhone?.replace(/\s+/g, '');
+    // const normalizedPhoneNoSpaces = normalizedPhone?.replace(/\s+/g, '');
 
     return this.prisma.user.create({
       data: {
         ...rest,
-        ...(normalizedPhoneNoSpaces ? { phone: normalizedPhoneNoSpaces } : {}),
+        ...(normalizedPhone ? { phone: normalizedPhone } : {}),
       },
     });
   }

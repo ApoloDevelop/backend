@@ -34,6 +34,7 @@ export class AuthService {
 
     //Verify if the phone already exists
     const userByPhone = await this.usersService.findUserByPhone(phone);
+    console.log('User by phone:', phone);
     if (userByPhone) {
       throw new BadRequestException('This phone already exists');
     }

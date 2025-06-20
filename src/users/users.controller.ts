@@ -43,6 +43,7 @@ export class UsersController {
     @Query('username') username?: string,
     @Query('phone') phone?: string,
   ) {
+    console.log(phone, 'in checkIfExists');
     const emailExists = email
       ? await this.usersService.findUserByEmail(email)
       : null;
