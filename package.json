@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/axios": "^4.0.0",
     "@nestjs/common": "^11.1.2",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.1.2",
@@ -35,6 +36,7 @@
     "passport": "^0.7.0",
     "passport-apple": "^2.0.2",
     "passport-google-oauth20": "^2.0.0",
+    "passport-lastfm": "^1.0.1",
     "passport-spotify": "^2.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
