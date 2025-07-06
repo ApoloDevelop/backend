@@ -62,6 +62,40 @@ export class SpotifyService {
     return data.artists.items[0] || null;
   }
 
+  async fetchAlbumByName(name: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=album&market=ES&limit=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      throw new InternalServerErrorException('Error buscando álbum en Spotify');
+    }
+    const data = await res.json();
+    return data.albums.items[0] || null;
+  }
+
+  async fetchSongByName(name: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=track&market=ES&limit=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      throw new InternalServerErrorException('Error buscando pista en Spotify');
+    }
+    const data = await res.json();
+    return data.tracks.items[0] || null;
+  }
+
   async fetchArtistAlbums(artistId: string) {
     const token = await this.getAccessToken();
     const res = await fetch(

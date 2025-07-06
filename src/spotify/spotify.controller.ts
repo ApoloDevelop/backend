@@ -9,4 +9,14 @@ export class SpotifyController {
   async getArtistByName(@Query('name') name: string) {
     return this.spotifyService.fetchArtistByName(name);
   }
+
+  @Get('album')
+  async getAlbumByName(@Query('name') name: string) {
+    return this.spotifyService.fetchAlbumByName(name);
+  }
+
+  @Get('track')
+  async getSongByName(@Query('name') name: string) {
+    return this.spotifyService.fetchSongByName(name);
+  }
 }
