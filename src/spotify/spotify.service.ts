@@ -114,4 +114,15 @@ export class SpotifyService {
     const data = await res.json();
     return data.items || [];
   }
+
+  async fetchArtistTopTracks(artistId: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=ES`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) throw new InternalServerErrorException('Error en top-tracks');
+    const data = await res.json();
+    return data.tracks.slice(0, 5);
+  }
 }
