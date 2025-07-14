@@ -20,6 +20,11 @@ export class SpotifyController {
     return this.spotifyService.fetchArtistTopTracks(artistId);
   }
 
+  @Get('artist/releases')
+  async getArtistReleases(@Query('artistId') artistId: string) {
+    return this.spotifyService.fetchArtistReleases(artistId);
+  }
+
   @Get('album')
   async getAlbumByName(@Query('name') name: string) {
     return this.spotifyService.fetchAlbumByName(name);

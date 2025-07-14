@@ -134,6 +134,25 @@ export class SpotifyService {
     return data.tracks.slice(0, 5);
   }
 
+  async fetchArtistReleases(artistId: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single,appears_on,compilation&market=ES`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      throw new InternalServerErrorException(
+        'Error buscando lanzamientos del artista en Spotify',
+      );
+    }
+    const data = await res.json();
+    return data.items || [];
+  }
+
   //   async generateBioWithAI(input: {
   //     name: string;
   //     URI: string;
