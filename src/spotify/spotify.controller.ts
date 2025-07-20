@@ -37,9 +37,7 @@ export class SpotifyController {
 
   // @Get('artist/bio')
   // async getArtistBio(@Query('name') name: string) {
-  //   // 1) Last.fm
 
-  //   // 3) IA: necesitamos géneros, discografía y top tracks
   //   const artist = await this.spotifyService.fetchArtistByName(name);
   //   const uri = artist?.uri;
 

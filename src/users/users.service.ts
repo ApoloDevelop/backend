@@ -81,7 +81,6 @@ export class UsersService {
     if (updateUserDto.password) {
       updateUserDto.password = await bcryptjs.hash(updateUserDto.password, 10);
     } else {
-      // Elimina el campo password si no se va a actualizar
       delete updateUserDto.password;
     }
 

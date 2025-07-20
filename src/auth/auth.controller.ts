@@ -65,19 +65,4 @@ export class AuthController {
       `${process.env.FRONTEND_URL}/oauth-success?token=${token}`,
     );
   }
-
-  //LastFM Auth route
-  @Get('lastfm')
-  @UseGuards(PassportAuthGuard('lastfm'))
-  async lastfmAuth() {}
-
-  //LastFM Auth callback route
-  @Get('lastfm/callback')
-  @UseGuards(PassportAuthGuard('lastfm'))
-  async lastfmCallback(@Req() req: Request, @Res() res: Response) {
-    const { token } = await this.authService.oauthLogin(req.user);
-    return res.redirect(
-      `${process.env.FRONTEND_URL}/oauth-success?token=${token}`,
-    );
-  }
 }

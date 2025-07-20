@@ -10,7 +10,6 @@ export class MusicbrainzService {
     this.UA = `Apolo/1.0 (${email})`;
   }
 
-  /** 1) Busca candidatos por nombre */
   private async searchByName(name: string, limit = 20) {
     const url = new URL('https://musicbrainz.org/ws/2/artist');
     url.searchParams.set('query', name);
@@ -26,7 +25,6 @@ export class MusicbrainzService {
     return data.artists as Array<{ id: string }>;
   }
 
-  /** 2) Trae relaciones de URL para un MBID dado */
   private async fetchWithRels(mbid: string) {
     const url =
       `https://musicbrainz.org/ws/2/artist/${mbid}` + '?fmt=json&inc=url-rels';
@@ -39,7 +37,6 @@ export class MusicbrainzService {
     }>;
   }
 
-  /** 3) Empareja por URL de Spotify */
   async matchSpotifyArtist(spotifyId: string, name: string) {
     const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
     console.log(spotifyUrl);
@@ -56,7 +53,7 @@ export class MusicbrainzService {
         return c.id; // este MBID es el match exacto
       }
     }
-    return null; // no encontramos match por URL
+    return null; // no se encuentra match por URL
   }
 
   private async fetchTags(
@@ -73,12 +70,10 @@ export class MusicbrainzService {
       .sort((a, b) => b.count - a.count);
   }
 
-  /** 2️⃣ Busca artistas por tag */
   private async searchByTag(
     tag: string,
     limit: number,
   ): Promise<Array<{ id: string; name: string }>> {
-    // Encerramos el tag en comillas y forzamos Person
     const query = `tag:"${tag}" AND type:Person`;
     const url = new URL('https://musicbrainz.org/ws/2/artist');
     url.searchParams.set('query', query);
@@ -99,19 +94,14 @@ export class MusicbrainzService {
     }));
   }
 
-  /**
-   * 3️⃣ Empareja: obtén topTags (hasta `tagsLimit`), busca `artistsPerTag` por cada uno,
-   *    agrupa, quita duplicados y excluye el mbid original.
-   */
   async fetchSimilarByTags(
     mbid: string,
     tagsLimit = 3,
     artistsPerTag = 5,
     resultLimit = 5,
   ): Promise<Array<{ id: string; name: string }>> {
-    // 1) Tags ordenadas por count
     const tags = await this.fetchTags(mbid);
-    const topTags = tags.slice(0, tagsLimit); // ya ordenadas desc
+    const topTags = tags.slice(0, tagsLimit);
 
     // 2) Bucket para acumular score
     const bucket = new Map<
@@ -132,21 +122,12 @@ export class MusicbrainzService {
       }
     }
 
-    // 3) Ordenamos por score y limitamos
     return Array.from(bucket.values())
       .sort((a, b) => b.score - a.score)
       .slice(0, resultLimit)
       .map(({ id, name }) => ({ id, name }));
   }
 
-  /**
-   *  Obtiene todos los detalles de biografía de MusicBrainz:
-   *  - Nombre real (alias tipo "Real name" si existe, sino el nombre principal)
-   *  - Fecha de nacimiento = life-span.begin
-   *  - Lugar de nacimiento = begin-area.name
-   *  - Tipo = Person / Group
-   *  - Biografía = annotation
-   */
   async fetchArtistDetails(mbid: string) {
     const url =
       `https://musicbrainz.org/ws/2/artist/${mbid}?` +
@@ -165,7 +146,6 @@ export class MusicbrainzService {
     }
     const data = await res.json();
 
-    // Nombre completo: buscamos alias de tipo "Real name"
     const realAlias = Array.isArray(data.aliases)
       ? data.aliases.find((a: any) => a.type === 'Legal name')?.name
       : null;
@@ -176,9 +156,6 @@ export class MusicbrainzService {
     const birthCountryCode = data['country'] || null;
     const birthPlace = data['begin-area']?.name || null;
     const type = data.type || null;
-    // annotation puede ser muy largo, quizá cortar al primer párrafo
-    const rawBio: string = data.disambiguation || '';
-    const bio = rawBio.split('\n\n')[0].trim();
 
     return {
       fullName,
@@ -187,7 +164,6 @@ export class MusicbrainzService {
       birthCountryCode,
       birthPlace,
       type,
-      bio,
     };
   }
 }
