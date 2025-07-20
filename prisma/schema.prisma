@@ -61,7 +61,6 @@ model article_tag {
 model artist {
   id             Int            @id @default(autoincrement())
   name           String         @db.VarChar(100)
-  biography      String?        @db.Text
   verified_score Decimal?       @default(0.00) @db.Decimal(3, 2)
   user_score     Decimal?       @default(0.00) @db.Decimal(3, 2)
   birthdate      DateTime?      @db.Date
@@ -207,8 +206,7 @@ model item {
   track         track[]
   user_activity user_activity[]
   venue         venue[]
-
-  @@unique([item_type, item_id], map: "item_type")
+  
 }
 
 model review {

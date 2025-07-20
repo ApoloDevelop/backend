@@ -36,4 +36,11 @@ export class MusicbrainzController {
     const lm = limit ? +limit : undefined;
     return this.mb.fetchSimilarByTags(mbid, tl, pt, lm);
   }
+
+  @Get('details')
+  async details(@Query('mbid') mbid: string) {
+    if (!mbid)
+      throw new BadRequestException('Query param "mbid" es obligatorio');
+    return this.mb.fetchArtistDetails(mbid);
+  }
 }

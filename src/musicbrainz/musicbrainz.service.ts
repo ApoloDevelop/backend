@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class MusicbrainzService {
   }
 
   /** 1) Busca candidatos por nombre */
-  private async searchByName(name: string, limit = 5) {
+  private async searchByName(name: string, limit = 20) {
     const url = new URL('https://musicbrainz.org/ws/2/artist');
     url.searchParams.set('query', name);
     url.searchParams.set('fmt', 'json');
@@ -20,7 +20,8 @@ export class MusicbrainzService {
     const res = await fetch(url.toString(), {
       headers: { 'User-Agent': this.UA },
     });
-    if (!res.ok) throw new Error('Error buscando en MusicBrainz');
+    if (!res.ok)
+      throw new InternalServerErrorException('Error buscando en MusicBrainz');
     const data = await res.json();
     return data.artists as Array<{ id: string }>;
   }
@@ -42,7 +43,7 @@ export class MusicbrainzService {
   async matchSpotifyArtist(spotifyId: string, name: string) {
     const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
     console.log(spotifyUrl);
-    const candidates = await this.searchByName(name, 5);
+    const candidates = await this.searchByName(name, 20);
 
     for (const c of candidates) {
       const detail = await this.fetchWithRels(c.id);
@@ -64,7 +65,7 @@ export class MusicbrainzService {
     const url =
       `https://musicbrainz.org/ws/2/artist/${mbid}` + '?fmt=json&inc=tags';
     const res = await fetch(url, { headers: { 'User-Agent': this.UA } });
-    if (!res.ok) throw new Error('Error fetching tags');
+    if (!res.ok) throw new InternalServerErrorException('Error fetching tags');
     const json = await res.json();
     console.log('Tags for MBID', mbid, ':', json.tags);
     return (json.tags || [])
@@ -88,7 +89,9 @@ export class MusicbrainzService {
       headers: { 'User-Agent': this.UA },
     });
     if (!res.ok)
-      throw new Error(`Error buscando por tag “${tag}” (${res.status})`);
+      throw new InternalServerErrorException(
+        `Error buscando por tag “${tag}” (${res.status})`,
+      );
     const json = await res.json();
     return (json.artists || []).map((a: any) => ({
       id: a.id,
@@ -134,5 +137,57 @@ export class MusicbrainzService {
       .sort((a, b) => b.score - a.score)
       .slice(0, resultLimit)
       .map(({ id, name }) => ({ id, name }));
+  }
+
+  /**
+   *  Obtiene todos los detalles de biografía de MusicBrainz:
+   *  - Nombre real (alias tipo "Real name" si existe, sino el nombre principal)
+   *  - Fecha de nacimiento = life-span.begin
+   *  - Lugar de nacimiento = begin-area.name
+   *  - Tipo = Person / Group
+   *  - Biografía = annotation
+   */
+  async fetchArtistDetails(mbid: string) {
+    const url =
+      `https://musicbrainz.org/ws/2/artist/${mbid}?` +
+      new URLSearchParams({
+        fmt: 'json',
+        inc: 'aliases+annotation',
+      }).toString();
+
+    const res = await fetch(url, {
+      headers: { 'User-Agent': this.UA },
+    });
+    if (!res.ok) {
+      throw new InternalServerErrorException(
+        `Error fetching artist details (${res.status})`,
+      );
+    }
+    const data = await res.json();
+
+    // Nombre completo: buscamos alias de tipo "Real name"
+    const realAlias = Array.isArray(data.aliases)
+      ? data.aliases.find((a: any) => a.type === 'Legal name')?.name
+      : null;
+
+    const fullName = realAlias || data.name;
+    const birthDate = data['life-span']?.begin || null;
+    const birthCountry = data['area']?.name || null;
+    const birthCountryCode = data['country'] || null;
+    const birthPlace = data['begin-area']?.name || null;
+    const type = data.type || null;
+    // annotation puede ser muy largo, quizá cortar al primer párrafo
+    const rawBio: string = data.disambiguation || '';
+    const bio = rawBio.split('\n\n')[0].trim();
+
+    return {
+      fullName,
+      birthDate,
+      birthCountry,
+      birthCountryCode,
+      birthPlace,
+      type,
+      bio,
+    };
   }
 }
