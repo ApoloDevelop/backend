@@ -53,4 +53,37 @@ export class ReviewsService {
       },
     });
   }
+
+  // ...existing code...
+
+  async getArtistReviewAverages(artistName: string) {
+    const artist = await this.prisma.artist.findFirst({
+      where: { name: artistName },
+    });
+    if (!artist) {
+      return { verified: null, unverified: null };
+    }
+
+    const [verified, unverified] = await Promise.all([
+      this.prisma.review.aggregate({
+        where: {
+          item_id: artist.item_id,
+          verified: 1,
+        },
+        _avg: { score: true },
+      }),
+      this.prisma.review.aggregate({
+        where: {
+          item_id: artist.item_id,
+          verified: 0,
+        },
+        _avg: { score: true },
+      }),
+    ]);
+
+    return {
+      verified: verified._avg.score,
+      unverified: unverified._avg.score,
+    };
+  }
 }

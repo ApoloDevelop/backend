@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 
 @Controller('reviews')
@@ -17,5 +17,13 @@ export class ReviewsController {
     },
   ) {
     return this.reviewsService.rateArtist(dto);
+  }
+
+  @Get('artist/average')
+  async getArtistReviewAverages(@Query('artistName') artistName: string) {
+    if (!artistName) {
+      throw new Error('artistName es obligatorio');
+    }
+    return this.reviewsService.getArtistReviewAverages(artistName);
   }
 }
