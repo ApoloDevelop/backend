@@ -8,6 +8,7 @@ import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { SpotifyModule } from './spotify/spotify.module';
 import { MusicbrainzModule } from './musicbrainz/musicbrainz.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { ItemModule } from './item/item.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     PrismaModule,
     MusicbrainzModule,
     ReviewsModule,
+    ItemModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],

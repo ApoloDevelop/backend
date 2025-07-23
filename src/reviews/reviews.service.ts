@@ -86,4 +86,49 @@ export class ReviewsService {
       unverified: unverified._avg.score,
     };
   }
+
+  async getArtistReviewCount(artistName: string) {
+    const artist = await this.prisma.artist.findFirst({
+      where: { name: artistName },
+    });
+    if (!artist) {
+      return { verifiedCount: 0, unverifiedCount: 0 };
+    }
+
+    const [verifiedCount, unverifiedCount] = await Promise.all([
+      this.prisma.review.count({
+        where: {
+          item_id: artist.item_id,
+          verified: 1,
+        },
+      }),
+      this.prisma.review.count({
+        where: {
+          item_id: artist.item_id,
+          verified: 0,
+        },
+      }),
+    ]);
+
+    return {
+      verifiedCount,
+      unverifiedCount,
+    };
+  }
+
+  async getReviewsByItem({
+    itemId,
+    verified,
+  }: {
+    itemId: number;
+    verified: boolean;
+  }) {
+    return this.prisma.review.findMany({
+      where: { item_id: itemId, verified: verified ? 1 : 0 },
+      include: {
+        user: { select: { id: true, username: true, profile_pic: true } },
+      },
+      orderBy: { id: 'desc' },
+    });
+  }
 }
