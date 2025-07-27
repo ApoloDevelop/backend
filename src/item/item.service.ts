@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -47,7 +51,7 @@ export class ItemService {
     }
 
     if (!item) {
-      throw new BadRequestException(
+      throw new NotFoundException(
         `No se encontró un ítem del tipo "${type}" con el nombre "${name}"`,
       );
     }

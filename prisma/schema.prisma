@@ -92,6 +92,28 @@ model comment {
   @@index([user_id], map: "user_id")
 }
 
+model custom_list {
+  id         Int                @id @default(autoincrement())
+  name       String             @db.VarChar(255)     // Nombre de la lista, p.e. “Mis discos favoritos”
+  userId     Int
+  itemType   item_item_type     // El tipo único de ítem permitido en esta lista
+  createdAt  DateTime           @default(now())      
+  user       user               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listItems  custom_list_item[]  
+
+  @@index([userId])
+}
+
+model custom_list_item {
+  listId  Int
+  itemId  Int
+  list    custom_list @relation(fields: [listId], references: [id], onDelete: Cascade)
+  item    item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([listId, itemId])
+  @@index([itemId])
+}
+
 model event {
   id           Int            @id @default(autoincrement())
   name         String         @db.VarChar(255)
@@ -206,7 +228,7 @@ model item {
   track         track[]
   user_activity user_activity[]
   venue         venue[]
-  
+  custom_list_items custom_list_item[]
 }
 
 model review {
@@ -307,6 +329,7 @@ model user {
   social_genre                    user_genre?
   article                         article[]
   comment                         comment[]
+  custom_lists                    custom_list[]
   favorite_favorite_userTouser    favorite[]      @relation("favorite_userTouser")
   follow_follow_seguidor_idTouser follow[]        @relation("follow_seguidor_idTouser")
   follow_follow_seguido_idTouser  follow[]        @relation("follow_seguido_idTouser")
@@ -314,6 +337,7 @@ model user {
   role                            role            @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "user_ibfk_1")
   user_activity                   user_activity[]
   votes                           votes[]
+  
 
   @@index([role_id], map: "user_type")
 }
