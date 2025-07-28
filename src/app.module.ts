@@ -9,6 +9,7 @@ import { SpotifyModule } from './spotify/spotify.module';
 import { MusicbrainzModule } from './musicbrainz/musicbrainz.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ItemModule } from './item/item.module';
+import { FavoritesModule } from './favorites/favorites.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { ItemModule } from './item/item.module';
     MusicbrainzModule,
     ReviewsModule,
     ItemModule,
+    FavoritesModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],
