@@ -10,6 +10,7 @@ import { MusicbrainzModule } from './musicbrainz/musicbrainz.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ItemModule } from './item/item.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { ListsModule } from './lists/lists.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     ReviewsModule,
     ItemModule,
     FavoritesModule,
+    ListsModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],
