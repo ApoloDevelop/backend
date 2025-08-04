@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Query } from '@nestjs/common';
 import { SpotifyService } from './spotify.service';
 
 @Controller('spotify')
@@ -7,7 +7,11 @@ export class SpotifyController {
 
   @Get('artist')
   async getArtistByName(@Query('name') name: string) {
-    return this.spotifyService.fetchArtistByName(name);
+    const artist = await this.spotifyService.fetchArtistByName(name);
+    if (!artist) {
+      throw new NotFoundException(`Artista no encontrado`);
+    }
+    return artist;
   }
 
   @Get('artist/albums')

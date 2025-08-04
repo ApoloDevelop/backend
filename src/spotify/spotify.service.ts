@@ -8,17 +8,17 @@ export class SpotifyService {
   private clientSecret: string;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
-  private openai: OpenAI;
+  // private openai: OpenAI;
 
   constructor(private configService: ConfigService) {
     this.clientId = this.configService.get<string>('SPOTIFY_CLIENT_ID');
     this.clientSecret = this.configService.get<string>('SPOTIFY_CLIENT_SECRET');
 
-    const openaiKey = this.configService.get<string>('OPENAI_API_KEY');
-    if (!openaiKey) {
-      throw new InternalServerErrorException('OPENAI_API_KEY no está definida');
-    }
-    this.openai = new OpenAI({ apiKey: openaiKey });
+    // const openaiKey = this.configService.get<string>('OPENAI_API_KEY');
+    // if (!openaiKey) {
+    //   throw new InternalServerErrorException('OPENAI_API_KEY no está definida');
+    // }
+    // this.openai = new OpenAI({ apiKey: openaiKey });
   }
 
   private async getAccessToken(): Promise<string> {
@@ -54,7 +54,7 @@ export class SpotifyService {
   async fetchArtistByName(name: string) {
     const token = await this.getAccessToken();
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=1`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=10`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -67,7 +67,15 @@ export class SpotifyService {
       );
     }
     const data = await res.json();
-    return data.artists.items[0] || null;
+    const items = data.artists.items as Array<{
+      name: string;
+      id: string;
+      images: Array<{ url: string }>;
+    }>;
+    const exact = items.find(
+      (a) => a.name.trim().toLowerCase() === name.trim().toLowerCase(),
+    );
+    return exact || null;
   }
 
   async fetchAlbumByName(name: string) {
