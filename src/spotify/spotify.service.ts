@@ -53,6 +53,7 @@ export class SpotifyService {
 
   async fetchArtistByName(name: string) {
     const token = await this.getAccessToken();
+    console.log(encodeURIComponent(name));
     const res = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=10`,
       {
@@ -92,7 +93,48 @@ export class SpotifyService {
       throw new InternalServerErrorException('Error buscando álbum en Spotify');
     }
     const data = await res.json();
-    return data.albums.items[0] || null;
+    const items = data.albums.items as Array<{
+      name: string;
+      id: string;
+      images: Array<{ url: string }>;
+      label: string;
+      artists: Array<{ name: string; id: string }>;
+      release_date: string;
+      uri: string;
+    }>;
+
+    // Buscar coincidencia exacta
+    const exact = items.find(
+      (album) => album.name.trim().toLowerCase() === name.trim().toLowerCase(),
+    );
+
+    return exact || null;
+  }
+
+  async fetchAlbumTracks(albumId: string) {
+    const token = await this.getAccessToken();
+    let tracks: any[] = [];
+    let nextUrl = `https://api.spotify.com/v1/albums/${albumId}/tracks`;
+
+    while (nextUrl) {
+      const res = await fetch(nextUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        throw new InternalServerErrorException(
+          'Error buscando pistas del álbum',
+        );
+      }
+
+      const data = await res.json();
+      tracks = tracks.concat(data.items); // Agregar las pistas actuales
+      nextUrl = data.next; // Actualizar la URL para la siguiente página
+    }
+
+    return tracks;
   }
 
   async fetchSongByName(name: string) {

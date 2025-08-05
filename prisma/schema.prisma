@@ -61,8 +61,6 @@ model article_tag {
 model artist {
   id             Int            @id @default(autoincrement())
   name           String         @db.VarChar(100)
-  verified_score Decimal?       @default(0.00) @db.Decimal(3, 2)
-  user_score     Decimal?       @default(0.00) @db.Decimal(3, 2)
   birthdate      DateTime?      @db.Date
   item_id        Int
   album_artist   album_artist[]

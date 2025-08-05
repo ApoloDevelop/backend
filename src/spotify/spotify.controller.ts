@@ -31,7 +31,16 @@ export class SpotifyController {
 
   @Get('album')
   async getAlbumByName(@Query('name') name: string) {
-    return this.spotifyService.fetchAlbumByName(name);
+    const album = await this.spotifyService.fetchAlbumByName(name);
+    if (!album) {
+      throw new NotFoundException(`Álbum no encontrado`);
+    }
+    return album;
+  }
+
+  @Get('album/tracks')
+  async getAlbumTracks(@Query('albumId') albumId: string) {
+    return this.spotifyService.fetchAlbumTracks(albumId);
   }
 
   @Get('track')
