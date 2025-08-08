@@ -13,7 +13,6 @@ export class ReviewsController {
       score: number;
       comment?: string;
       userId: number;
-      birthdate?: Date;
     },
   ) {
     return this.reviewsService.rateArtist(dto);

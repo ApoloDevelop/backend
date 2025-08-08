@@ -10,13 +10,11 @@ export class ReviewsService {
     score,
     comment,
     userId,
-    birthdate,
   }: {
     artistName: string;
     score: number;
     comment?: string;
     userId: number;
-    birthdate?: Date;
   }) {
     let artist = await this.prisma.artist.findFirst({
       where: { name: artistName },
@@ -34,7 +32,6 @@ export class ReviewsService {
         data: {
           name: artistName,
           item_id: item.id,
-          ...(birthdate && { birthdate }),
         },
       });
 
