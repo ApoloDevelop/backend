@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
+// import OpenAI from 'openai';
 
 @Injectable()
 export class SpotifyService {
