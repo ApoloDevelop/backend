@@ -1,21 +1,14 @@
 import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
+import { RateDto } from './dto/rate.dto';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  @Post('artist')
-  async rateArtist(
-    @Body()
-    dto: {
-      artistName: string;
-      score: number;
-      comment?: string;
-      userId: number;
-    },
-  ) {
-    return this.reviewsService.rateArtist(dto);
+  @Post('rate')
+  async rate(@Body() dto: RateDto) {
+    return this.reviewsService.rate(dto);
   }
 
   @Get('artist/average')
@@ -44,5 +37,14 @@ export class ReviewsController {
       itemId: parseInt(itemId, 10),
       verified: isVerified,
     });
+  }
+
+  @Get('album/stats')
+  async getAlbumStats(
+    @Query('albumName') albumName: string,
+    @Query('artistName') artistName?: string,
+  ) {
+    if (!albumName) throw new Error('El nombre del álbum es obligatorio');
+    return this.reviewsService.getAlbumReviewStats(albumName, artistName);
   }
 }
