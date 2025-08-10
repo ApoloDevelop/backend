@@ -16,26 +16,21 @@ export class FavoritesController {
   constructor(private readonly favoritesService: FavoritesService) {}
 
   @Get()
-  async getIsFavorite(@Query() query: FavoriteQueryDto) {
-    const { userId, artistName } = query;
-    const isFavorite = await this.favoritesService.isFavorite(
-      userId,
-      artistName,
-    );
+  async getStatus(@Query() query: FavoriteQueryDto) {
+    const isFavorite = await this.favoritesService.isFavorite(query);
     return { isFavorite };
   }
 
   @Post()
   @HttpCode(201)
   async addFavorite(@Body() body: FavoriteBodyDto) {
-    const { user, artistName } = body;
-    await this.favoritesService.addFavorite(user, artistName);
+    await this.favoritesService.addFavorite(body);
+    return { ok: true };
   }
 
   @Delete()
   @HttpCode(204)
   async removeFavorite(@Query() query: FavoriteQueryDto) {
-    const { userId, artistName } = query;
-    await this.favoritesService.removeFavorite(userId, artistName);
+    await this.favoritesService.removeFavorite(query);
   }
 }
