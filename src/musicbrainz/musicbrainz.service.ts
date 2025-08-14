@@ -5,9 +5,8 @@ import { ConfigService } from '@nestjs/config';
 export class MusicbrainzService {
   private UA: string;
 
-  constructor(private configService: ConfigService) {
-    const email = this.configService.get<string>('GMAIL');
-    this.UA = `Apolo/1.0 (${email})`;
+  constructor() {
+    this.UA = `Apolo/1.0 (apolo@gmail.com)`;
   }
 
   private async searchByName(name: string, limit = 20) {

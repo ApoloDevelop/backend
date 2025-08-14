@@ -47,18 +47,4 @@ export class SpotifyController {
   async getSongByName(@Query('name') name: string) {
     return this.spotifyService.fetchSongByName(name);
   }
-
-  // @Get('artist/bio')
-  // async getArtistBio(@Query('name') name: string) {
-
-  //   const artist = await this.spotifyService.fetchArtistByName(name);
-  //   const uri = artist?.uri;
-
-  //   const generated = await this.spotifyService.generateBioWithAI({
-  //     name: artist.name,
-  //     URI: uri,
-  //   });
-
-  //   return { origin: 'ai', text: generated };
-  // }
 }

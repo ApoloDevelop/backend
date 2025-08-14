@@ -13,14 +13,9 @@ export class SpotifyService {
   constructor(private configService: ConfigService) {
     this.clientId = this.configService.get<string>('SPOTIFY_CLIENT_ID');
     this.clientSecret = this.configService.get<string>('SPOTIFY_CLIENT_SECRET');
-
-    // const openaiKey = this.configService.get<string>('OPENAI_API_KEY');
-    // if (!openaiKey) {
-    //   throw new InternalServerErrorException('OPENAI_API_KEY no está definida');
-    // }
-    // this.openai = new OpenAI({ apiKey: openaiKey });
   }
 
+  //-------------AUTENTICACION-------------
   private async getAccessToken(): Promise<string> {
     if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
@@ -51,6 +46,7 @@ export class SpotifyService {
     return this.accessToken;
   }
 
+  //-------------ARTISTAS-------------
   async fetchArtistByName(name: string) {
     const token = await this.getAccessToken();
     console.log(encodeURIComponent(name));
@@ -79,6 +75,37 @@ export class SpotifyService {
     return exact || null;
   }
 
+  async fetchArtistTopTracks(artistId: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=ES`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) throw new InternalServerErrorException('Error en top-tracks');
+    const data = await res.json();
+    return data.tracks.slice(0, 5);
+  }
+
+  async fetchArtistReleases(artistId: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single,appears_on,compilation&market=ES`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      throw new InternalServerErrorException(
+        'Error buscando lanzamientos del artista en Spotify',
+      );
+    }
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  //-------------ÁLBUMES-------------
   async fetchAlbumByName(name: string) {
     const token = await this.getAccessToken();
     const res = await fetch(
@@ -137,6 +164,7 @@ export class SpotifyService {
     return tracks;
   }
 
+  //-------------CANCIONES-------------
   async fetchSongByName(name: string) {
     const token = await this.getAccessToken();
     const res = await fetch(
@@ -151,6 +179,20 @@ export class SpotifyService {
       throw new InternalServerErrorException('Error buscando pista en Spotify');
     }
     const data = await res.json();
+    const items = data.tracks.items as Array<{
+      id: string;
+      name: string;
+      duration_ms: number;
+      explicit: boolean;
+      album: {
+        id: string;
+        name: string;
+        images: Array<{ url: string }>;
+        release_date: string;
+      };
+      artists: Array<{ id: string; name: string }>;
+      external_urls: { spotify: string };
+    }>;
     return data.tracks.items[0] || null;
   }
 
@@ -172,75 +214,4 @@ export class SpotifyService {
     const data = await res.json();
     return data.items || [];
   }
-
-  async fetchArtistTopTracks(artistId: string) {
-    const token = await this.getAccessToken();
-    const res = await fetch(
-      `https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=ES`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    if (!res.ok) throw new InternalServerErrorException('Error en top-tracks');
-    const data = await res.json();
-    return data.tracks.slice(0, 5);
-  }
-
-  async fetchArtistReleases(artistId: string) {
-    const token = await this.getAccessToken();
-    const res = await fetch(
-      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album,single,appears_on,compilation&market=ES`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    if (!res.ok) {
-      throw new InternalServerErrorException(
-        'Error buscando lanzamientos del artista en Spotify',
-      );
-    }
-    const data = await res.json();
-    return data.items || [];
-  }
-
-  //   async generateBioWithAI(input: {
-  //     name: string;
-  //     URI: string;
-  //   }): Promise<string> {
-  //     const { name, URI } = input;
-
-  //     const userPrompt = `
-  // Eres un redactor musical. Crea una biografía breve (4–5 líneas) en español para el artista "${name}".
-  // Para que tengas más claro quién es, esta es su URI de Spotify: ${URI}.
-  // Quiero la información más actualizada posible, debe ser reciente (año 2025).
-  // menciona qué géneros canta o toca, sus álbumes recientes y sus canciones más populares.
-  // Menciona también su impacto en la música actual y sus próximos proyectos, si tiene.
-  // Habla de su estilo y logros, de cuando y dónde nació y de su impacto en la música actual.
-  // Sé claro, cercano y evita clichés.
-  //     `.trim();
-
-  //     try {
-  //       const resp = await this.openai.chat.completions.create({
-  //         model: 'gpt-4.1-mini',
-  //         messages: [
-  //           {
-  //             role: 'system',
-  //             content: 'Eres un redactor de biografías musicales.',
-  //           },
-  //           { role: 'user', content: userPrompt },
-  //         ],
-  //         temperature: 0.7,
-  //         max_tokens: 200,
-  //       });
-
-  //       const content = resp.choices?.[0].message?.content;
-  //       if (!content) throw new Error('Sin contenido en la respuesta de OpenAI');
-  //       return content.trim();
-  //     } catch (err) {
-  //       console.error('Error generando bio con IA:', err);
-  //       throw new InternalServerErrorException(
-  //         'No se pudo generar biografía con IA',
-  //       );
-  //     }
-  //   }
 }
