@@ -2,13 +2,19 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 // import OpenAI from 'openai';
 
+const fold = (s: string) =>
+  s
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
 @Injectable()
 export class SpotifyService {
   private clientId: string;
   private clientSecret: string;
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
-  // private openai: OpenAI;
 
   constructor(private configService: ConfigService) {
     this.clientId = this.configService.get<string>('SPOTIFY_CLIENT_ID');
@@ -106,36 +112,79 @@ export class SpotifyService {
   }
 
   //-------------ÁLBUMES-------------
-  async fetchAlbumByName(name: string) {
+  async fetchAlbumByName(name: string, artistName: string) {
     const token = await this.getAccessToken();
-    const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=album&market=ES&limit=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
+
+    const parts = [`album:"${name}"`];
+    if (artistName) parts.push(`artist:"${artistName}"`);
+    const q = parts.join(' ');
+
+    let res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=album&market=ES&limit=50`,
+      { headers: { Authorization: `Bearer ${token}` } },
     );
-    if (!res.ok) {
+    if (!res.ok)
       throw new InternalServerErrorException('Error buscando álbum en Spotify');
-    }
-    const data = await res.json();
-    const items = data.albums.items as Array<{
-      name: string;
-      id: string;
-      images: Array<{ url: string }>;
-      label: string;
-      artists: Array<{ name: string; id: string }>;
-      release_date: string;
-      uri: string;
-    }>;
 
-    // Buscar coincidencia exacta
-    const exact = items.find(
-      (album) => album.name.trim().toLowerCase() === name.trim().toLowerCase(),
+    let data = await res.json();
+    let items = data.albums?.items ?? [];
+
+    const targetAlbum = fold(name);
+    const targetArtist = artistName ? fold(artistName) : null;
+
+    let match = items.find(
+      (a: any) =>
+        fold(a.name) === targetAlbum &&
+        (!targetArtist ||
+          a.artists?.some((x: any) => fold(x.name) === targetArtist)),
     );
+    if (match) return match;
 
-    return exact || null;
+    if (artistName) {
+      const artist = await this.fetchArtistByName(artistName);
+      if (artist) {
+        res = await fetch(
+          `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album,single,compilation,appears_on&market=ES&limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (res.ok) {
+          data = await res.json();
+          items = data.items ?? [];
+          match = items.find((a: any) => fold(a.name) === targetAlbum);
+          if (match) return match;
+        }
+        //sin market
+        res = await fetch(
+          `https://api.spotify.com/v1/artists/${artist.id}/albums?include_groups=album,single,compilation,appears_on&limit=50`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (res.ok) {
+          data = await res.json();
+          items = data.items ?? [];
+          match = items.find((a: any) => fold(a.name) === targetAlbum);
+          if (match) return match;
+        }
+      }
+    }
+
+    //Búsqueda global sin market
+    res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=album&limit=50`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (res.ok) {
+      data = await res.json();
+      items = data.albums?.items ?? [];
+      match = items.find(
+        (a: any) =>
+          fold(a.name) === targetAlbum &&
+          (!targetArtist ||
+            a.artists?.some((x: any) => fold(x.name) === targetArtist)),
+      );
+      if (match) return match;
+    }
+
+    return null;
   }
 
   async fetchAlbumTracks(albumId: string) {
@@ -157,43 +206,75 @@ export class SpotifyService {
       }
 
       const data = await res.json();
-      tracks = tracks.concat(data.items); // Agregar las pistas actuales
-      nextUrl = data.next; // Actualizar la URL para la siguiente página
+      tracks = tracks.concat(data.items);
+      nextUrl = data.next;
     }
 
     return tracks;
   }
 
   //-------------CANCIONES-------------
-  async fetchSongByName(name: string) {
+  async fetchSongByName(name: string, albumName?: string, artistName?: string) {
     const token = await this.getAccessToken();
-    const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=track&market=ES&limit=1`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    if (!res.ok) {
+
+    const parts = [`track:"${name}"`];
+    if (albumName) parts.push(`album:"${albumName}"`);
+    if (artistName) parts.push(`artist:"${artistName}"`);
+    const q = parts.join(' ');
+
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&market=ES&limit=50`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok)
       throw new InternalServerErrorException('Error buscando pista en Spotify');
-    }
+
     const data = await res.json();
-    const items = data.tracks.items as Array<{
-      id: string;
-      name: string;
-      duration_ms: number;
-      explicit: boolean;
-      album: {
-        id: string;
-        name: string;
-        images: Array<{ url: string }>;
-        release_date: string;
-      };
-      artists: Array<{ id: string; name: string }>;
-      external_urls: { spotify: string };
-    }>;
-    return data.tracks.items[0] || null;
+    const items = data.tracks?.items ?? [];
+
+    const targetName = fold(name);
+    const targetAlbum = albumName ? fold(albumName) : null;
+    const targetArt = artistName ? fold(artistName) : null;
+
+    let match = items.find(
+      (t: any) =>
+        fold(t.name) === targetName &&
+        (!targetAlbum || (t.album && fold(t.album.name) === targetAlbum)) &&
+        (!targetArt || t.artists?.some((a: any) => fold(a.name) === targetArt)),
+    );
+    if (match) return match;
+
+    //sin market
+    const url2 = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=track&limit=50`;
+    const res2 = await fetch(url2, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res2.ok) {
+      const data2 = await res2.json();
+      const items2 = data2.tracks?.items ?? [];
+      match = items2.find(
+        (t: any) =>
+          fold(t.name) === targetName &&
+          (!targetAlbum || (t.album && fold(t.album.name) === targetAlbum)) &&
+          (!targetArt ||
+            t.artists?.some((a: any) => fold(a.name) === targetArt)),
+      );
+      if (match) return match;
+    }
+
+    if (albumName || artistName) {
+      const album = artistName
+        ? await this.fetchAlbumByName(albumName ?? '', artistName)
+        : null;
+
+      if (album?.id) {
+        const tracks = await this.fetchAlbumTracks(album.id);
+        const local = tracks.find((t: any) => fold(t.name) === targetName);
+        if (local) return local;
+      }
+    }
+
+    return null;
   }
 
   async fetchArtistAlbums(artistId: string) {
