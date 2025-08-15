@@ -11,6 +11,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ItemModule } from './item/item.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ListsModule } from './lists/lists.module';
+import { SongstatsModule } from './songstats/songstats.module';
+import { GeniusModule } from './genius/genius.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ListsModule } from './lists/lists.module';
     ItemModule,
     FavoritesModule,
     ListsModule,
+    SongstatsModule,
+    GeniusModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],
