@@ -1,5 +1,29 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
+export interface SongstatsTrackInfo {
+  bpm: number | null;
+  key: string | null;
+  genres: string[];
+  collaborators: { name: string; roles: string[] }[];
+  label: string | null;
+  distributor: string | null;
+}
+
+export interface SongstatsRelatedArtist {
+  name: string | null;
+  avatar: string | null;
+}
+
+export interface SongstatsArtistInfo {
+  bio: string | null;
+  genres: string[];
+  related_artists: SongstatsRelatedArtist[];
+}
 
 @Injectable()
 export class SongstatsService {
@@ -18,7 +42,7 @@ export class SongstatsService {
     };
   }
 
-  private normalize(json: any) {
+  private normalizeTrack(json: any): SongstatsTrackInfo {
     const audioAnalysis = json?.audio_analysis ?? [];
     const info = json?.track_info ?? json?.object_info ?? {};
 
@@ -43,9 +67,7 @@ export class SongstatsService {
       : (info?.key ?? null);
 
     // ---Géneros---
-    let genres: string[] = [];
-    if (Array.isArray(info?.genres)) genres = info.genres;
-    else if (typeof info?.genre === 'string') genres = [info.genre];
+    const genres = Array.isArray(info?.genres) ? info.genres.slice(0, 3) : [];
 
     // ---Colaboradores---
     let collaborators = (info?.collaborators ?? []) as any[];
@@ -85,7 +107,10 @@ export class SongstatsService {
     };
   }
 
-  async getTrackInfo(spotifyId: string) {
+  async getTrackInfo(spotifyId: string): Promise<SongstatsTrackInfo> {
+    if (!spotifyId) {
+      throw new BadRequestException('spotifyId is required');
+    }
     const url = new URL(`https://${this.rapidApiHost}/tracks/info`);
     url.searchParams.set('spotify_track_id', spotifyId);
 
@@ -107,7 +132,61 @@ export class SongstatsService {
     const json = await res.json();
 
     return {
-      ...this.normalize(json),
+      ...this.normalizeTrack(json),
     };
+  }
+
+  private normalizeArtist(json: any): SongstatsArtistInfo {
+    const artistInfo = json?.artist_info ?? {};
+
+    const bio =
+      typeof artistInfo?.bio === 'string' && artistInfo.bio.trim().length
+        ? artistInfo.bio
+        : null;
+
+    const genres = Array.isArray(artistInfo?.genres)
+      ? artistInfo.genres.slice(0, 3)
+      : [];
+
+    const relatedRaw = Array.isArray(artistInfo?.related_artists)
+      ? artistInfo.related_artists
+      : [];
+
+    const related_artists: SongstatsRelatedArtist[] = relatedRaw.map(
+      (a: any) => ({
+        name: a?.name ?? null,
+        avatar: a?.avatar ?? null,
+      }),
+    );
+
+    return { bio, genres, related_artists };
+  }
+
+  async getArtistInfo(spotifyArtistId: string): Promise<SongstatsArtistInfo> {
+    if (!spotifyArtistId) {
+      throw new BadRequestException('spotifyArtistId is required');
+    }
+
+    const url = new URL(`https://${this.rapidApiHost}/artists/info`);
+    url.searchParams.set('spotify_artist_id', spotifyArtistId);
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: this.headers(),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(
+        'Error fetching artist info: ',
+        res.status,
+        res.statusText,
+        body,
+      );
+      throw new InternalServerErrorException('Failed to fetch artist info');
+    }
+
+    const json = await res.json();
+    return this.normalizeArtist(json);
   }
 }
