@@ -15,6 +15,7 @@ export interface SongstatsTrackInfo {
 }
 
 export interface SongstatsRelatedArtist {
+  id: string | null;
   name: string | null;
   avatar: string | null;
 }
@@ -154,6 +155,7 @@ export class SongstatsService {
 
     const related_artists: SongstatsRelatedArtist[] = relatedRaw.map(
       (a: any) => ({
+        id: a?.songstats_artist_id ?? null,
         name: a?.name ?? null,
         avatar: a?.avatar ?? null,
       }),

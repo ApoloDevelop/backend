@@ -81,6 +81,25 @@ export class SpotifyService {
     return exact || null;
   }
 
+  async fetchArtistAlbums(artistId: string) {
+    const token = await this.getAccessToken();
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&limit=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    if (!res.ok) {
+      throw new InternalServerErrorException(
+        'Error buscando álbumes del artista en Spotify',
+      );
+    }
+    const data = await res.json();
+    return data.items || [];
+  }
+
   async fetchArtistTopTracks(artistId: string) {
     const token = await this.getAccessToken();
     const res = await fetch(
@@ -275,24 +294,5 @@ export class SpotifyService {
     }
 
     return null;
-  }
-
-  async fetchArtistAlbums(artistId: string) {
-    const token = await this.getAccessToken();
-    const res = await fetch(
-      `https://api.spotify.com/v1/artists/${artistId}/albums?include_groups=album&limit=5`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-    if (!res.ok) {
-      throw new InternalServerErrorException(
-        'Error buscando álbumes del artista en Spotify',
-      );
-    }
-    const data = await res.json();
-    return data.items || [];
   }
 }

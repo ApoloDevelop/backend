@@ -52,6 +52,12 @@ export class SpotifyController {
     @Query('albumName') albumName: string,
     @Query('artistName') artistName: string,
   ) {
-    return this.spotifyService.fetchSongByName(name, albumName, artistName);
+    const track = await this.spotifyService.fetchSongByName(
+      name,
+      albumName,
+      artistName,
+    );
+    if (!track) throw new NotFoundException('Pista no encontrada');
+    return track;
   }
 }
