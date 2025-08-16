@@ -26,6 +26,27 @@ export interface SongstatsArtistInfo {
   related_artists: SongstatsRelatedArtist[];
 }
 
+export interface SongstatsEvent {
+  title: string | null;
+  date: string | null; // YYYY-MM-DD
+  link: string | null;
+  city: string | null;
+  region: string | null;
+  countryCode: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+export interface SongstatsArtistEventInfo {
+  counts: {
+    citiesUpcoming: number;
+    countriesUpcoming: number;
+    eventsUpcoming: number;
+  };
+  upcoming: SongstatsEvent[];
+  past: SongstatsEvent[];
+}
+
 @Injectable()
 export class SongstatsService {
   private rapidApiKey: string;
@@ -42,6 +63,8 @@ export class SongstatsService {
       'X-RapidAPI-Host': this.rapidApiHost,
     };
   }
+
+  //--------TRACK------------
 
   private normalizeTrack(json: any): SongstatsTrackInfo {
     const audioAnalysis = json?.audio_analysis ?? [];
@@ -137,6 +160,8 @@ export class SongstatsService {
     };
   }
 
+  //--------ARTIST------------
+
   private normalizeArtist(json: any): SongstatsArtistInfo {
     const artistInfo = json?.artist_info ?? {};
 
@@ -190,5 +215,72 @@ export class SongstatsService {
 
     const json = await res.json();
     return this.normalizeArtist(json);
+  }
+
+  //------------EVENTS------------
+
+  private toNumber(n: any): number | null {
+    const v = Number(n);
+    return Number.isFinite(v) ? v : null;
+  }
+
+  private normalizeArtistEvents(json: any): SongstatsArtistEventInfo {
+    const e = json?.events ?? {};
+
+    const counts = {
+      citiesUpcoming: this.toNumber(e?.cities_upcoming) ?? 0,
+      countriesUpcoming: this.toNumber(e?.countries_upcoming) ?? 0,
+      eventsUpcoming: this.toNumber(e?.events_upcoming) ?? 0,
+    };
+
+    const mapEvent = (ev: any): SongstatsEvent => ({
+      title: ev?.event_title ?? null,
+      date: ev?.event_date ?? null, // YYYY-MM-DD
+      link: ev?.event_link ?? null,
+      city: ev?.city_name ?? null,
+      region: ev?.city_region ?? null,
+      countryCode: ev?.country_code ?? null,
+      lat: this.toNumber(ev?.lat),
+      lng: this.toNumber(ev?.lng),
+    });
+
+    const upcoming: SongstatsEvent[] = Array.isArray(e?.upcoming_events)
+      ? e.upcoming_events.map(mapEvent)
+      : [];
+
+    const past: SongstatsEvent[] = Array.isArray(e?.past_events)
+      ? e.past_events.map(mapEvent)
+      : [];
+
+    return { counts, upcoming, past };
+  }
+
+  async getArtistEventInfo(
+    spotifyArtistId: string,
+  ): Promise<SongstatsArtistEventInfo> {
+    if (!spotifyArtistId)
+      throw new BadRequestException('spotifyArtistId is required');
+
+    const url = new URL(`https://${this.rapidApiHost}/artists/events`);
+    url.searchParams.set('spotify_artist_id', spotifyArtistId);
+
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers: this.headers(),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(
+        'Error fetching artist events: ',
+        res.status,
+        res.statusText,
+        body,
+      );
+      throw new InternalServerErrorException('Failed to fetch artist events');
+    }
+
+    const json = await res.json();
+    return this.normalizeArtistEvents(json);
   }
 }

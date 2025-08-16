@@ -32,4 +32,15 @@ export class SongstatsController {
     if (!data) throw new NotFoundException('Artist not found');
     return data;
   }
+
+  @Get('artist/events')
+  async getArtistEventInfo(@Query('spotifyArtistId') spotifyArtistId: string) {
+    if (!spotifyArtistId) {
+      throw new BadRequestException('spotifyArtistId query param is required');
+    }
+    const data =
+      await this.songstatsService.getArtistEventInfo(spotifyArtistId);
+    if (!data) throw new NotFoundException('Artist events not found');
+    return data;
+  }
 }
