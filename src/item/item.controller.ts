@@ -16,7 +16,6 @@ export class ItemController {
 
   @Get('find')
   async findItem(@Query() q: ResolveItemDto) {
-    console.log('Resolviendo item:', q);
     const result = await this.itemService.ensureItemByTypeAndName(
       q.type,
       q.name,

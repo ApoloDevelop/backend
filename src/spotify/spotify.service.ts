@@ -55,7 +55,6 @@ export class SpotifyService {
   //-------------ARTISTAS-------------
   async fetchArtistByName(name: string) {
     const token = await this.getAccessToken();
-    console.log(encodeURIComponent(name));
     const res = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=10`,
       {

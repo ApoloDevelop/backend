@@ -13,6 +13,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { ListsModule } from './lists/lists.module';
 import { SongstatsModule } from './songstats/songstats.module';
 import { GeniusModule } from './genius/genius.module';
+import { GeoModule } from './geo/geo.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { GeniusModule } from './genius/genius.module';
     ListsModule,
     SongstatsModule,
     GeniusModule,
+    GeoModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],

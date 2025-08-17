@@ -148,7 +148,6 @@ export class GeniusService {
 
   async lyricsByTrack({ title, artist }: { title: string; artist: string }) {
     const query = `${title} ${artist}`.trim();
-    console.log(query);
     const hits = await this.search(query, 10, 1);
     if (!hits.length)
       throw new NotFoundException('No se encontraron coincidencias en Genius');

@@ -27,8 +27,6 @@ export class MusicbrainzService {
   private async fetchWithRels(mbid: string) {
     const url =
       `https://musicbrainz.org/ws/2/artist/${mbid}` + '?fmt=json&inc=url-rels';
-    console.log('Fetching relations for MBID:', mbid);
-    console.log('Request URL:', url);
     const res = await fetch(url, { headers: { 'User-Agent': this.UA } });
     if (!res.ok) return null;
     return res.json() as Promise<{
@@ -38,7 +36,6 @@ export class MusicbrainzService {
 
   async matchSpotifyArtist(spotifyId: string, name: string) {
     const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
-    console.log(spotifyUrl);
     const candidates = await this.searchByName(name, 20);
 
     for (const c of candidates) {
@@ -48,7 +45,6 @@ export class MusicbrainzService {
         (r) => r.type === 'free streaming' && r.url.resource === spotifyUrl,
       );
       if (found) {
-        console.log(`Match encontrado: ${c.id} para ${name}`);
         return c.id; // este MBID es el match exacto
       }
     }
@@ -63,7 +59,6 @@ export class MusicbrainzService {
     const res = await fetch(url, { headers: { 'User-Agent': this.UA } });
     if (!res.ok) throw new InternalServerErrorException('Error fetching tags');
     const json = await res.json();
-    console.log('Tags for MBID', mbid, ':', json.tags);
     return (json.tags || [])
       .map((t: any) => ({ name: t.name, count: t.count }))
       .sort((a, b) => b.count - a.count);

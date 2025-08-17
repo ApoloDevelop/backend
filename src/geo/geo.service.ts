@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class GeoService {
   private userAgent: string;
-  private email: string;
 
   constructor(private configService: ConfigService) {
     this.userAgent = this.configService.get<string>('USER_AGENT');
@@ -26,6 +25,7 @@ export class GeoService {
       limit: '1',
     });
     const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+    console.log('Geocoding URL:', url);
     const res = await fetch(url, {
       headers: { 'User-Agent': this.userAgent },
     });

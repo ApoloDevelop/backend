@@ -10,6 +10,7 @@ export class GeoController {
     @Query('city') city?: string,
     @Query('country') country?: string,
   ) {
+    console.log('Geocoding request:', { city, country });
     if (!city || !country)
       throw new NotFoundException('Faltan parámetros city y country');
     return this.geoService.geocodeCityCountry(city, country);
