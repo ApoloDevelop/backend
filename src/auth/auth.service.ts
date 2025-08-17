@@ -18,7 +18,7 @@ export class AuthService {
 
   //--------------REGISTER-------------------
   async register(registerDto: RegisterDto) {
-    const { email, username, phone } = registerDto;
+    const { email, username } = registerDto;
 
     //Verify if the email already exists
     const userByEmail = await this.usersService.findUserByEmail(email);
@@ -30,13 +30,6 @@ export class AuthService {
     const userByUsername = await this.usersService.findUserByUsername(username);
     if (userByUsername) {
       throw new BadRequestException('This username already exists');
-    }
-
-    //Verify if the phone already exists
-    const userByPhone = await this.usersService.findUserByPhone(phone);
-    console.log('User by phone:', phone);
-    if (userByPhone) {
-      throw new BadRequestException('This phone already exists');
     }
 
     const hashedPassword = await bcryptjs.hash(registerDto.password, 10);

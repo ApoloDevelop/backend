@@ -31,28 +31,10 @@ export class UsersService {
     });
   }
 
-  async findUserByPhone(phone: string): Promise<User> {
-    const normalizedPhone = phone.startsWith('+') ? phone : `+${phone}`;
-    // const normalizedPhoneNoSpaces = normalizedPhone.replace(/\s+/g, '');
-    return this.prisma.user.findUnique({
-      where: { phone: normalizedPhone },
-    });
-  }
-
-  async createUser(CreateUserDto: CreateUserDto): Promise<User> {
-    const { phone, ...rest } = CreateUserDto;
-
-    const normalizedPhone = phone?.startsWith('+')
-      ? phone
-      : phone
-        ? `+${phone}`
-        : null;
-    // const normalizedPhoneNoSpaces = normalizedPhone?.replace(/\s+/g, '');
-
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
     return this.prisma.user.create({
       data: {
-        ...rest,
-        ...(normalizedPhone ? { phone: normalizedPhone } : {}),
+        ...createUserDto,
       },
     });
   }

@@ -305,7 +305,6 @@ model user {
   birthdate                       DateTime        @db.Date
   country                         String?         @db.VarChar(255)
   city                            String?         @db.VarChar(255)
-  phone                           String?         @unique(map: "unique_phone") @db.VarChar(20)
   spotify_link                    String?         @db.VarChar(255)
   instagram_link                  String?         @db.VarChar(255)
   twitter_link                    String?         @db.VarChar(255)

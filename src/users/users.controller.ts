@@ -32,32 +32,21 @@ export class UsersController {
     return await this.usersService.findUserByUsername(username);
   }
 
-  @Get('phone/:phone')
-  async findUserByPhone(@Param('phone') phone: string) {
-    return await this.usersService.findUserByPhone(phone);
-  }
-
   @Get('exists')
   async checkIfExists(
     @Query('email') email?: string,
     @Query('username') username?: string,
-    @Query('phone') phone?: string,
   ) {
-    console.log(phone, 'in checkIfExists');
     const emailExists = email
       ? await this.usersService.findUserByEmail(email)
       : null;
     const usernameExists = username
       ? await this.usersService.findUserByUsername(username)
       : null;
-    const phoneExists = phone
-      ? await this.usersService.findUserByPhone(phone)
-      : null;
 
     return {
       emailExists: !!emailExists,
       usernameExists: !!usernameExists,
-      phoneExists: !!phoneExists,
     };
   }
 

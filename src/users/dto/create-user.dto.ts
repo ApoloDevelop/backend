@@ -68,9 +68,6 @@ export class CreateUserDto {
   @IsOptional()
   social_genre?: UserGenre;
 
-  @IsOptional()
-  phone?: string;
-
   @IsUrl()
   @IsOptional()
   spotify_link?: string;

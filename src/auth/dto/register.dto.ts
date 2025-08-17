@@ -5,7 +5,6 @@ import {
   IsEnum,
   IsLowercase,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   IsStrongPassword,
   IsUrl,
@@ -28,8 +27,8 @@ export class RegisterDto {
   })
   fullname: string;
 
-  @MinLength(3, {
-    message: 'El nombre de usuario debe tener al menos 3 caracteres',
+  @MinLength(2, {
+    message: 'El nombre de usuario debe tener al menos 2 caracteres',
   })
   @IsString()
   @IsLowercase({ message: 'El nombre de usuario debe estar en minúsculas' })
@@ -63,15 +62,13 @@ export class RegisterDto {
   birthdate: Date;
 
   @IsString()
+  @MaxLength(2)
   @IsOptional()
   country?: string;
 
   @IsString()
   @IsOptional()
   city?: string;
-
-  @IsOptional()
-  phone?: string;
 
   @IsUrl()
   @IsOptional()
