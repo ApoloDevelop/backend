@@ -10,7 +10,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix('api/v3');
+  app.setGlobalPrefix('api/v4');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
