@@ -9,6 +9,7 @@ import { Prisma } from '@prisma/client';
 import { ListArticlesDto } from './dto/list-articles.dto';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { sanitizeQuill } from 'src/common/sanitize/sanitize.util';
 
 @Injectable()
 export class ArticlesService {
@@ -52,10 +53,13 @@ export class ArticlesService {
 
   async create(dto: CreateArticleDto) {
     try {
+      const clean = await sanitizeQuill(dto.content || '');
+      console.log('Sanitized content:', clean);
+      this.assertNotEmpty(clean, 'content');
       return await this.prisma.article.create({
         data: {
           title: dto.title,
-          content: dto.content,
+          content: clean,
           author_id: dto.author_id,
           image_url: dto.image_url ?? null,
         },
@@ -67,11 +71,16 @@ export class ArticlesService {
 
   async update(id: number, dto: UpdateArticleDto) {
     try {
+      const clean =
+        dto.content !== undefined
+          ? await sanitizeQuill(dto.content || '')
+          : undefined;
+      if (clean !== undefined) this.assertNotEmpty(clean, 'content');
       return await this.prisma.article.update({
         where: { id },
         data: {
           ...(dto.title !== undefined ? { title: dto.title } : {}),
-          ...(dto.content !== undefined ? { content: dto.content } : {}),
+          ...(clean !== undefined ? { content: clean } : {}),
           ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
         },
       });
@@ -87,6 +96,15 @@ export class ArticlesService {
     } catch (e: any) {
       this.handlePrismaError(e, 'borrar', id);
     }
+  }
+
+  private assertNotEmpty(html: string, field: string) {
+    const text = html
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    if (!text)
+      throw new BadRequestException(`El ${field} no puede estar vacío`);
   }
 
   private handlePrismaError(e: any, action: string, id?: number): never {
