@@ -15,6 +15,7 @@ import { SongstatsModule } from './songstats/songstats.module';
 import { GeniusModule } from './genius/genius.module';
 import { GeoModule } from './geo/geo.module';
 import { ArticlesModule } from './articles/articles.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ArticlesModule } from './articles/articles.module';
     GeniusModule,
     GeoModule,
     ArticlesModule,
+    CloudinaryModule,
   ],
   controllers: [CloudinaryController],
   providers: [CloudinaryService],

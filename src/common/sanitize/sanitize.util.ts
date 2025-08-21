@@ -87,6 +87,7 @@ const OPTIONS = {
     div: ['class', 'style'],
     code: ['class'],
     pre: ['class'],
+    li: ['data-list'],
   },
   allowedClasses: {
     p: [
@@ -147,6 +148,7 @@ const OPTIONS = {
     div: ['ql-code-block-container'],
     code: ['ql-code-block'],
     pre: ['ql-code-block'],
+    li: ['ql-indent-1', 'ql-indent-2', 'ql-indent-3', 'ql-indent-4'],
   },
   allowedStyles: {
     '*': {
