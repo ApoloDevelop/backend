@@ -34,8 +34,7 @@ async function loadSanitizeFn() {
 const ALLOWED_IMG_HOSTS = new Set([
   'localhost',
   // añade tus hosts de media
-  'cdn.tu-dominio.com',
-  'static.tu-dominio.com',
+  'res.cloudinary.com',
 ]);
 
 const OPTIONS = {
