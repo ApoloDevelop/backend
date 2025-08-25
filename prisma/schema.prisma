@@ -76,7 +76,6 @@ model comment {
   parent_id     Int?
   content       String          @db.Text
   created_at    DateTime?       @default(now()) @db.Timestamp(0)
-  status        comment_status? @default(active)
   article       article         @relation(fields: [article_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comment_ibfk_1")
   user          user            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comment_ibfk_2")
   comment       comment?        @relation("commentTocomment", fields: [parent_id], references: [id], onUpdate: NoAction, map: "comment_ibfk_3")
@@ -396,11 +395,6 @@ enum venue_venue_type {
   club
   outdoor
   other
-}
-
-enum comment_status {
-  active
-  deleted
 }
 
 enum user_genre {

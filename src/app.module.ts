@@ -3,8 +3,6 @@ import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
-import { CloudinaryController } from './cloudinary/cloudinary.controller';
-import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { SpotifyModule } from './spotify/spotify.module';
 import { MusicbrainzModule } from './musicbrainz/musicbrainz.module';
 import { ReviewsModule } from './reviews/reviews.module';
@@ -16,6 +14,7 @@ import { GeniusModule } from './genius/genius.module';
 import { GeoModule } from './geo/geo.module';
 import { ArticlesModule } from './articles/articles.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -34,8 +33,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     GeoModule,
     ArticlesModule,
     CloudinaryModule,
+    CommentsModule,
   ],
-  controllers: [CloudinaryController],
-  providers: [CloudinaryService],
 })
 export class AppModule {}
