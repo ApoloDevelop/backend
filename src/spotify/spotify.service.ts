@@ -294,4 +294,28 @@ export class SpotifyService {
 
     return null;
   }
+
+  async search(
+    q: string,
+    type: 'artist' | 'album' | 'track',
+    opts?: { limit?: number; offset?: number; market?: string },
+  ) {
+    const token = await this.getAccessToken();
+    const limit = Math.min(Math.max(opts?.limit ?? 12, 1), 50);
+    const offset = Math.max(opts?.offset ?? 0, 0);
+    const market = opts?.market ?? 'ES';
+
+    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}&limit=${limit}&offset=${offset}&market=${encodeURIComponent(market)}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok)
+      throw new InternalServerErrorException('Error en búsqueda Spotify');
+
+    const data = await res.json();
+    // Devuelve el bloque específico para simplificar el front
+    if (type === 'artist') return data.artists;
+    if (type === 'album') return data.albums;
+    return data.tracks; // track
+  }
 }

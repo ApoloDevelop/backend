@@ -60,4 +60,21 @@ export class SpotifyController {
     if (!track) throw new NotFoundException('Pista no encontrada');
     return track;
   }
+
+  @Get('search')
+  async search(
+    @Query('q') q: string,
+    @Query('type') type: 'artist' | 'album' | 'track',
+    @Query('limit') limit = '12',
+    @Query('offset') offset = '0',
+    @Query('market') market = 'ES',
+  ) {
+    if (!q || !type)
+      throw new NotFoundException('Parámetros de búsqueda inválidos');
+    return this.spotifyService.search(q, type, {
+      limit: Number(limit) || 12,
+      offset: Number(offset) || 0,
+      market,
+    });
+  }
 }
