@@ -14,7 +14,7 @@ export class ItemService {
   async ensureItemByTypeAndName(
     type: ItemType,
     name: string,
-    ctx?: { artistName?: string; location?: string },
+    ctx?: { artistName?: string; location?: string; albumName?: string },
   ): Promise<{ itemId: number }> {
     return this.prisma.$transaction(async (tx) => {
       if (type === 'artist') {
@@ -97,29 +97,64 @@ export class ItemService {
           });
         }
 
-        // Buscar track ya vinculado a ese artista
         let track = await tx.track.findFirst({
           where: {
             title: name,
             track_artist: { some: { artist_id: artist.id } },
           },
         });
-        if (track) return { itemId: track.item_id };
+        if (!track) {
+          const it = await tx.item.create({
+            data: { item_type: 'track', item_id: 0 },
+          });
+          track = await tx.track.create({
+            data: { title: name, item_id: it.id },
+          });
+          await tx.item.update({
+            where: { id: it.id },
+            data: { item_id: track.id },
+          });
+          await tx.track_artist.create({
+            data: { track_id: track.id, artist_id: artist.id },
+          });
+        }
 
-        // Crear track + relación
-        const item = await tx.item.create({
-          data: { item_type: 'track', item_id: 0 },
-        });
-        track = await tx.track.create({
-          data: { title: name, item_id: item.id },
-        });
-        await tx.item.update({
-          where: { id: item.id },
-          data: { item_id: track.id },
-        });
-        await tx.track_artist.create({
-          data: { track_id: track.id, artist_id: artist.id },
-        });
+        // 3) si viene albumName, asegurar álbum y crear relación track_album
+        if (ctx.albumName && ctx.albumName.trim()) {
+          // asegurar álbum asociado al artista
+          let album = await tx.album.findFirst({
+            where: {
+              name: ctx.albumName,
+              album_artist: { some: { id_artist: artist.id } },
+            },
+          });
+          if (!album) {
+            const ai = await tx.item.create({
+              data: { item_type: 'album', item_id: 0 },
+            });
+            album = await tx.album.create({
+              data: { name: ctx.albumName, item_id: ai.id },
+            });
+            await tx.item.update({
+              where: { id: ai.id },
+              data: { item_id: album.id },
+            });
+            await tx.album_artist.create({
+              data: { id_album: album.id, id_artist: artist.id },
+            });
+          }
+
+          // vincular track ↔ album si no existe
+          const existsTA = await tx.track_album.findFirst({
+            where: { track_id: track.id, album_id: album.id },
+          });
+          if (!existsTA) {
+            await tx.track_album.create({
+              data: { track_id: track.id, album_id: album.id },
+            });
+          }
+        }
+
         return { itemId: track.item_id };
       }
 

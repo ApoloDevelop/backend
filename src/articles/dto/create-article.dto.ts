@@ -1,12 +1,32 @@
 // src/articles/dto/create-article.dto.ts
+import { Type } from 'class-transformer';
 import {
+  IsArray,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
+
+class TagInputDto {
+  @IsIn(['artist', 'album', 'track'])
+  type: 'artist' | 'album' | 'track';
+
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  artistName?: string; // requerido para album/track en tu ItemService
+
+  @IsOptional()
+  @IsString()
+  albumName?: string; // requerido para track en tu ItemService
+}
 
 export class CreateArticleDto {
   @IsString()
@@ -26,4 +46,10 @@ export class CreateArticleDto {
   @IsString()
   @MaxLength(255)
   image_url?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TagInputDto)
+  tags?: TagInputDto[];
 }

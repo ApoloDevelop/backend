@@ -10,10 +10,14 @@ import { ListArticlesDto } from './dto/list-articles.dto';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { sanitizeQuill } from 'src/common/sanitize/sanitize.util';
+import { ItemService } from 'src/item/item.service';
 
 @Injectable()
 export class ArticlesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private itemService: ItemService,
+  ) {}
 
   async list(query: ListArticlesDto) {
     const safeOffset = Math.max(
@@ -46,9 +50,76 @@ export class ArticlesService {
   }
 
   async getById(id: number) {
-    const article = await this.prisma.article.findUnique({ where: { id } });
-    if (!article) throw new NotFoundException('Artículo no encontrado');
-    return article;
+    const art = await this.prisma.article.findUnique({
+      where: { id },
+      include: {
+        article_tag: {
+          include: {
+            tag: {
+              include: {
+                item: {
+                  include: {
+                    artist: true,
+                    album: {
+                      include: { album_artist: { include: { artist: true } } },
+                    },
+                    track: {
+                      include: {
+                        track_artist: { include: { artist: true } },
+                        track_album: {
+                          include: {
+                            album: {
+                              include: {
+                                album_artist: { include: { artist: true } },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!art) throw new NotFoundException('Artículo no encontrado');
+
+    const tags = (art.article_tag ?? []).map((at) => {
+      const it = at.tag.item;
+      const type = it.item_type as 'artist' | 'album' | 'track';
+      let artistName: string | undefined;
+      let albumName: string | undefined;
+
+      if (type === 'artist') {
+        // Para comodidad, puedes exponer artistName = name
+        artistName = at.tag.name;
+      } else if (type === 'album') {
+        const album = it.album?.[0];
+        albumName = album?.name ?? at.tag.name; // nombre del tag ya es el álbum
+        artistName = album?.album_artist?.[0]?.artist?.name;
+      } else if (type === 'track') {
+        const tr = it.track?.[0];
+        artistName = tr?.track_artist?.[0]?.artist?.name;
+        albumName = tr?.track_album?.[0]?.album?.name;
+      }
+
+      return {
+        id: at.tag.id,
+        name: at.tag.name,
+        type:
+          type === 'artist' || type === 'album' || type === 'track'
+            ? type
+            : 'artist',
+        ...(artistName ? { artistName } : {}),
+        ...(albumName ? { albumName } : {}),
+      };
+    });
+
+    const { article_tag, ...rest } = art as any;
+    return { ...rest, tags };
   }
 
   async create(dto: CreateArticleDto) {
@@ -56,13 +127,63 @@ export class ArticlesService {
       const clean = await sanitizeQuill(dto.content || '');
       console.log('Sanitized content:', clean);
       this.assertNotEmpty(clean, 'content');
-      return await this.prisma.article.create({
-        data: {
-          title: dto.title,
-          content: clean,
-          author_id: dto.author_id,
-          image_url: dto.image_url ?? null,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        // 1) crear artículo
+        const article = await tx.article.create({
+          data: {
+            title: dto.title,
+            content: clean,
+            author_id: dto.author_id,
+            image_url: dto.image_url ?? null,
+          },
+        });
+
+        // 2) si vienen tags: asegurar item + crear/usar tag + vincular
+        if (dto.tags?.length) {
+          for (const t of dto.tags) {
+            // Asegurar itemId según tipo
+            const ctx =
+              t.type === 'artist'
+                ? {}
+                : t.type === 'album'
+                  ? { artistName: t.artistName ?? '' }
+                  : /* track */ {
+                      artistName: t.artistName ?? '',
+                      albumName: t.albumName ?? '',
+                    };
+
+            const { itemId } = await this.itemService.ensureItemByTypeAndName(
+              t.type as any,
+              t.name,
+              ctx as any,
+            );
+
+            // Buscar/crear tag para ese item
+            let tag = await tx.tag.findFirst({
+              where: { name: t.name, item_id: itemId },
+              select: { id: true },
+            });
+            if (!tag) {
+              tag = await tx.tag.create({
+                data: { name: t.name, item_id: itemId },
+                select: { id: true },
+              });
+            }
+
+            // Vincular (evita duplicado)
+            const exists = await tx.article_tag.findFirst({
+              where: { article_id: article.id, tag_id: tag.id },
+              select: { article_id: true },
+            });
+            if (!exists) {
+              await tx.article_tag.create({
+                data: { article_id: article.id, tag_id: tag.id },
+              });
+            }
+          }
+        }
+
+        return article;
       });
     } catch (e: any) {
       this.handlePrismaError(e, 'crear');
@@ -123,5 +244,27 @@ export class ArticlesService {
       }
     }
     throw new BadRequestException(`Error al ${action} el artículo`);
+  }
+
+  async related(id: number, limit = 3) {
+    // tags del artículo
+    const tIds = await this.prisma.article_tag.findMany({
+      where: { article_id: id },
+      select: { tag_id: true },
+    });
+    if (tIds.length === 0) return [];
+
+    const ids = tIds.map((t) => t.tag_id);
+
+    const related = await this.prisma.article.findMany({
+      where: {
+        id: { not: id },
+        article_tag: { some: { tag_id: { in: ids } } },
+      },
+      orderBy: { published_date: 'desc' },
+      take: Math.max(1, Math.min(50, limit)),
+    });
+
+    return related;
   }
 }

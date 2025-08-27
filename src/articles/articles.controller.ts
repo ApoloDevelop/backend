@@ -43,4 +43,9 @@ export class ArticlesController {
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.articlesService.remove(id);
   }
+
+  @Get(':id/related')
+  async getRelated(@Param('id') id: string, @Query('limit') limit?: string) {
+    return this.articlesService.related(Number(id), Number(limit) || 3);
+  }
 }
