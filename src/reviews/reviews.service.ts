@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 type RateableType = 'artist' | 'album' | 'track' | 'venue';
@@ -13,6 +14,8 @@ type RateArgs = {
   artistName?: string; // para album/track
   location?: string; // para venue
 };
+
+type VoteValue = 1 | -1;
 
 @Injectable()
 export class ReviewsService {
@@ -273,16 +276,87 @@ export class ReviewsService {
   async getReviewsByItem({
     itemId,
     verified,
+    userId,
   }: {
     itemId: number;
     verified: boolean;
+    userId?: number;
   }) {
-    return this.prisma.review.findMany({
+    const reviews = await this.prisma.review.findMany({
       where: { item_id: itemId, verified: verified ? 1 : 0 },
       include: {
         user: { select: { id: true, username: true, profile_pic: true } },
       },
       orderBy: { id: 'desc' },
     });
+
+    if (!reviews.length) return [];
+
+    const ids = reviews.map((r) => r.id);
+
+    const grouped = await this.prisma.review_vote.groupBy({
+      by: ['review_id', 'value'] as const,
+      where: {
+        review_id: { in: ids },
+        // OJO: NO ponemos value aquí para que salga 1 y -1 en una sola query.
+      } satisfies Prisma.review_voteWhereInput,
+      _count: { _all: true },
+    });
+
+    const upMap = new Map<number, number>();
+    const downMap = new Map<number, number>();
+    for (const g of grouped) {
+      if (g.value === 1) upMap.set(g.review_id, g._count._all);
+      else if (g.value === -1) downMap.set(g.review_id, g._count._all);
+    }
+
+    // Mi voto (opcional)
+    const myVotes = userId
+      ? await this.prisma.review_vote.findMany({
+          where: { user_id: userId, review_id: { in: ids } },
+          select: { review_id: true, value: true },
+        })
+      : [];
+
+    const mineMap = new Map<number, 1 | -1>();
+    for (const v of myVotes) mineMap.set(v.review_id, v.value as 1 | -1);
+
+    return reviews.map((r) => ({
+      ...r,
+      upvotes: upMap.get(r.id) ?? 0,
+      downvotes: downMap.get(r.id) ?? 0,
+      myVote: mineMap.get(r.id) ?? 0,
+    }));
+  }
+
+  async voteReview(reviewId: number, userId: number, value: VoteValue) {
+    if (value !== 1 && value !== -1) {
+      throw new BadRequestException('vote value must be 1 or -1');
+    }
+
+    // toggle: mismo valor -> borra; distinto -> actualiza; inexistente -> crea
+    const existing = await this.prisma.review_vote.findUnique({
+      where: { user_id_review_id: { user_id: userId, review_id: reviewId } },
+    });
+
+    if (!existing) {
+      await this.prisma.review_vote.create({
+        data: { user_id: userId, review_id: reviewId, value },
+      });
+      return { ok: true, action: 'created', value };
+    }
+
+    if (existing.value === value) {
+      await this.prisma.review_vote.delete({
+        where: { user_id_review_id: { user_id: userId, review_id: reviewId } },
+      });
+      return { ok: true, action: 'removed' };
+    }
+
+    await this.prisma.review_vote.update({
+      where: { user_id_review_id: { user_id: userId, review_id: reviewId } },
+      data: { value },
+    });
+    return { ok: true, action: 'updated', value };
   }
 }
