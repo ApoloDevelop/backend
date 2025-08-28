@@ -77,4 +77,9 @@ export class SpotifyController {
       market,
     });
   }
+
+  @Get('playlist')
+  async getPlaylist(@Query('id') id: string) {
+    return this.spotifyService.fetchPlaylist(id);
+  }
 }

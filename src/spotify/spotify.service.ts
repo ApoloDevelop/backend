@@ -318,4 +318,52 @@ export class SpotifyService {
     if (type === 'album') return data.albums;
     return data.tracks; // track
   }
+
+  // -------------PLAYLIST-------------
+  async fetchPlaylist(playlistId: string) {
+    const token = await this.getAccessToken();
+
+    // Meta de la playlist
+    const metaRes = await fetch(
+      `https://api.spotify.com/v1/playlists/${playlistId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (!metaRes.ok) {
+      throw new InternalServerErrorException(
+        'Error obteniendo playlist de Spotify',
+      );
+    }
+    const meta = await metaRes.json();
+
+    // Pistas (paginado hasta traerlas todas)
+    let url: string | null =
+      `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=100&market=ES`;
+    const items: any[] = [];
+    while (url) {
+      const page = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!page.ok) {
+        throw new InternalServerErrorException(
+          'Error obteniendo pistas de la playlist',
+        );
+      }
+      const data = await page.json();
+      items.push(...(data.items || []));
+      url = data.next;
+    }
+
+    const tracks = items
+      .map((i: any) => i.track)
+      .filter((t: any) => t && !t.is_local); // fuera locales/nulos
+
+    return {
+      id: meta.id,
+      name: meta.name,
+      external_urls: meta.external_urls,
+      tracks, // array de tracks de Spotify tal cual
+    };
+  }
 }
