@@ -277,29 +277,36 @@ export class ReviewsService {
     itemId,
     verified,
     userId,
+    take = 10,
+    cursor,
   }: {
     itemId: number;
     verified: boolean;
     userId?: number;
+    take?: number;
+    cursor?: number; // id de la última review recibida
   }) {
+    // Página de reviews
     const reviews = await this.prisma.review.findMany({
       where: { item_id: itemId, verified: verified ? 1 : 0 },
       include: {
         user: { select: { id: true, username: true, profile_pic: true } },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      take,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
-    if (!reviews.length) return [];
+    if (!reviews.length) {
+      return { items: [], nextCursor: null };
+    }
 
+    // Votos (solo de las ids de esta página)
     const ids = reviews.map((r) => r.id);
 
     const grouped = await this.prisma.review_vote.groupBy({
       by: ['review_id', 'value'] as const,
-      where: {
-        review_id: { in: ids },
-        // OJO: NO ponemos value aquí para que salga 1 y -1 en una sola query.
-      } satisfies Prisma.review_voteWhereInput,
+      where: { review_id: { in: ids } },
       _count: { _all: true },
     });
 
@@ -310,23 +317,31 @@ export class ReviewsService {
       else if (g.value === -1) downMap.set(g.review_id, g._count._all);
     }
 
-    // Mi voto (opcional)
-    const myVotes = userId
+    const mine = userId
       ? await this.prisma.review_vote.findMany({
           where: { user_id: userId, review_id: { in: ids } },
           select: { review_id: true, value: true },
         })
       : [];
+    const myMap = new Map<number, 1 | -1>();
+    for (const m of mine) myMap.set(m.review_id, m.value as 1 | -1);
 
-    const mineMap = new Map<number, 1 | -1>();
-    for (const v of myVotes) mineMap.set(v.review_id, v.value as 1 | -1);
-
-    return reviews.map((r) => ({
-      ...r,
+    const items = reviews.map((r) => ({
+      id: r.id,
+      score: r.score,
+      title: r.title,
+      text: r.text,
+      created_at: r.created_at, // <- ya lo añadiste
+      user: r.user,
       upvotes: upMap.get(r.id) ?? 0,
       downvotes: downMap.get(r.id) ?? 0,
-      myVote: mineMap.get(r.id) ?? 0,
+      myVote: (myMap.get(r.id) ?? 0) as -1 | 0 | 1,
     }));
+
+    const nextCursor =
+      reviews.length === take ? reviews[reviews.length - 1].id : null;
+
+    return { items, nextCursor };
   }
 
   async voteReview(reviewId: number, userId: number, value: VoteValue) {

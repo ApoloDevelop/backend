@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { RateDto } from './dto/rate.dto';
 
@@ -50,14 +57,21 @@ export class ReviewsController {
 
   @Get('item/reviews')
   getByItem(
-    @Query('itemId') itemId: string,
-    @Query('verified') verified: string,
-    @Query('userId') userId: string,
+    @Query('itemId', ParseIntPipe) itemId: number,
+    @Query('verified', ParseIntPipe) verifiedInt: number,
+    @Query('userId') userId?: string,
+    @Query('take') takeStr?: string,
+    @Query('cursor') cursorStr?: string,
   ) {
+    const take = takeStr ? Math.min(50, Math.max(1, Number(takeStr))) : 10;
+    const cursor = cursorStr ? Number(cursorStr) : undefined;
+
     return this.reviewsService.getReviewsByItem({
-      itemId: Number(itemId),
-      verified: verified === '1',
+      itemId,
+      verified: verifiedInt === 1,
       userId: userId ? Number(userId) : undefined,
+      take,
+      cursor,
     });
   }
 
