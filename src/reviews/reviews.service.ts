@@ -287,7 +287,7 @@ export class ReviewsService {
       include: {
         user: { select: { id: true, username: true, profile_pic: true } },
       },
-      orderBy: { id: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
 
     if (!reviews.length) return [];
