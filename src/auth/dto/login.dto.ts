@@ -1,13 +1,11 @@
-import { Transform } from "class-transformer";
-import { IsString, IsStrongPassword, MinLength } from "class-validator";
+import { Transform } from 'class-transformer';
+import { IsString } from 'class-validator';
 
 export class LoginDto {
+  @IsString()
+  credential: string;
 
-    @IsString()
-    credential: string;
-
-    @IsStrongPassword()
-    @MinLength(8)
-    @Transform(({ value }) => value.trim())
-    password: string;
+  @IsString()
+  @Transform(({ value }) => value.trim())
+  password: string;
 }

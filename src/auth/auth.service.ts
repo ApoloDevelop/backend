@@ -16,6 +16,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private sanitizeUser<T extends { password?: any }>(user: T) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...safe } = user as any;
+    return safe;
+  }
+
   //--------------REGISTER-------------------
   async register(registerDto: RegisterDto) {
     const { email, username } = registerDto;
@@ -45,7 +51,7 @@ export class AuthService {
     const payload = { sub: user.id, role: user.role_id };
     const token = await this.jwtService.signAsync(payload);
 
-    return { token, ...user };
+    return { token, user: this.sanitizeUser(user) };
   }
 
   //-----------LOGIN-------------------
@@ -56,7 +62,7 @@ export class AuthService {
       (await this.usersService.findUserByUsername(loginDto.credential));
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciales incorrectas');
     }
 
     //Check if the password is correct
@@ -66,7 +72,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Credenciales incorrectas');
     }
 
     //Generate JWT token
@@ -74,31 +80,39 @@ export class AuthService {
     const token = await this.jwtService.signAsync(payload);
 
     //Return the token and user data
-    return { token, user };
+    return { token, user: this.sanitizeUser(user) };
   }
 
   //-----------OAUTH-------------------
   async oauthLogin(oauthUser: any): Promise<{ user: any; token: string }> {
-    const { email, username, ...rest } = oauthUser;
+    const email = oauthUser.email ?? null;
+    const firstName = oauthUser.firstName ?? oauthUser.displayName ?? '';
+    const lastName = oauthUser.lastName ?? '';
+    const picture = oauthUser.picture ?? oauthUser.photos ?? null;
+    const suggestedUsername =
+      oauthUser.username ?? (email ? email.split('@')[0] : oauthUser.id);
+
+    if (!email) {
+      // Si el proveedor no nos da email, decide: o bien bloqueas y pides email, o creas un "pending" flow
+      throw new UnauthorizedException('Email not provided by provider');
+    }
+
     let user = await this.usersService.findUserByEmail(email);
 
     if (!user) {
       user = await this.usersService.createUser({
-        fullname:
-          `${oauthUser.firstName || ''} ${oauthUser.lastName || ''}`.trim(),
-        email: oauthUser.email,
-        username: oauthUser.username || oauthUser.email.split('@')[0],
+        fullname: `${firstName} ${lastName}`.trim(),
+        email,
+        username: suggestedUsername,
         password: null,
-        profile_pic: oauthUser.picture,
+        profile_pic: picture,
         role_id: 5,
-        birthdate: new Date(),
+        birthdate: new Date(), // o null si no es requerido
       });
     }
 
     const payload = { sub: user.id, role: user.role_id };
-    const token = await this.jwtService.signAsync(payload, {
-      expiresIn: '1d',
-    });
-    return { user, token };
+    const token = await this.jwtService.signAsync(payload, { expiresIn: '1d' });
+    return { user: this.sanitizeUser(user), token };
   }
 }

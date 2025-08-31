@@ -10,9 +10,10 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { AuthGuard } from './guard/auth.guard';
+import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -20,9 +21,7 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    const { password, ...userWithoutPassword } =
-      await this.authService.register(registerDto);
-    return userWithoutPassword;
+    return this.authService.register(registerDto);
   }
 
   @Post('login')
@@ -31,9 +30,9 @@ export class AuthController {
   }
 
   @Get('profile')
-  @UseGuards(AuthGuard)
-  profile(@Req() req) {
-    return req.user;
+  @UseGuards(JwtAuthGuard)
+  profile(@CurrentUser() user: any) {
+    return user;
   }
 
   //Google Auth route
