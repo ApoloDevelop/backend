@@ -267,4 +267,29 @@ export class ArticlesService {
 
     return related;
   }
+
+  async updateOwned(id: number, dto: UpdateArticleDto, userId: number) {
+    const clean =
+      dto.content !== undefined
+        ? await sanitizeQuill(dto.content || '')
+        : undefined;
+    if (clean !== undefined) this.assertNotEmpty(clean, 'content');
+
+    const { count } = await this.prisma.article.updateMany({
+      where: { id, author_id: userId },
+      data: {
+        ...(dto.title !== undefined ? { title: dto.title } : {}),
+        ...(clean !== undefined ? { content: clean } : {}),
+        ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
+      },
+    });
+    return count > 0;
+  }
+
+  async removeOwned(id: number, userId: number) {
+    const { count } = await this.prisma.article.deleteMany({
+      where: { id, author_id: userId },
+    });
+    return count > 0;
+  }
 }
