@@ -197,14 +197,83 @@ export class ArticlesService {
           ? await sanitizeQuill(dto.content || '')
           : undefined;
       if (clean !== undefined) this.assertNotEmpty(clean, 'content');
-      return await this.prisma.article.update({
-        where: { id },
-        data: {
-          ...(dto.title !== undefined ? { title: dto.title } : {}),
-          ...(clean !== undefined ? { content: clean } : {}),
-          ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
-        },
+
+      // Hacemos todo en transacción
+      await this.prisma.$transaction(async (tx) => {
+        // 1) Actualizar campos básicos
+        await tx.article.update({
+          where: { id },
+          data: {
+            ...(dto.title !== undefined ? { title: dto.title } : {}),
+            ...(clean !== undefined ? { content: clean } : {}),
+            ...(dto.image_url !== undefined
+              ? { image_url: dto.image_url }
+              : {}),
+          },
+        });
+
+        // 2) Si vienen tags, sincronizamos relaciones (set-like)
+        if (dto.tags !== undefined) {
+          // Resolver/asegurar tag_ids deseados
+          const desiredTagIds: number[] = [];
+          for (const t of dto.tags) {
+            const ctx =
+              t.type === 'artist'
+                ? {}
+                : t.type === 'album'
+                  ? { artistName: t.artistName ?? '' }
+                  : {
+                      artistName: t.artistName ?? '',
+                      albumName: t.albumName ?? '',
+                    };
+
+            const { itemId } = await this.itemService.ensureItemByTypeAndName(
+              t.type as any,
+              t.name,
+              ctx as any,
+            );
+
+            // Buscar/crear tag para ese item + nombre
+            let tag = await tx.tag.findFirst({
+              where: { name: t.name, item_id: itemId },
+              select: { id: true },
+            });
+            if (!tag) {
+              tag = await tx.tag.create({
+                data: { name: t.name, item_id: itemId },
+                select: { id: true },
+              });
+            }
+            desiredTagIds.push(tag.id);
+          }
+
+          // Estado actual
+          const current = await tx.article_tag.findMany({
+            where: { article_id: id },
+            select: { tag_id: true },
+          });
+          const currentIds = new Set(current.map((x) => x.tag_id));
+          const desiredIds = new Set(desiredTagIds);
+
+          // calcular diferencias
+          const toDelete = [...currentIds].filter((x) => !desiredIds.has(x));
+          const toCreate = [...desiredIds].filter((x) => !currentIds.has(x));
+
+          if (toDelete.length) {
+            await tx.article_tag.deleteMany({
+              where: { article_id: id, tag_id: { in: toDelete } },
+            });
+          }
+          for (const tagId of toCreate) {
+            await tx.article_tag.create({
+              data: { article_id: id, tag_id: tagId },
+            });
+          }
+        }
       });
+
+      // Devolvemos el artículo completo (con tags)
+      return this.getById(id);
     } catch (e: any) {
       this.handlePrismaError(e, 'actualizar', id);
     }
@@ -226,24 +295,6 @@ export class ArticlesService {
       .trim();
     if (!text)
       throw new BadRequestException(`El ${field} no puede estar vacío`);
-  }
-
-  private handlePrismaError(e: any, action: string, id?: number): never {
-    if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      // P2025: registro no encontrado (update/delete)
-      if (e.code === 'P2025') {
-        throw new NotFoundException(
-          `No se pudo ${action} el artículo${id ? ` con id ${id}` : ''}: no existe`,
-        );
-      }
-      // FK violation u otros errores de integridad
-      if (e.code === 'P2003') {
-        throw new BadRequestException(
-          'Violación de clave foránea (¿author_id existe?).',
-        );
-      }
-    }
-    throw new BadRequestException(`Error al ${action} el artículo`);
   }
 
   async related(id: number, limit = 3) {
@@ -275,15 +326,77 @@ export class ArticlesService {
         : undefined;
     if (clean !== undefined) this.assertNotEmpty(clean, 'content');
 
-    const { count } = await this.prisma.article.updateMany({
-      where: { id, author_id: userId },
-      data: {
-        ...(dto.title !== undefined ? { title: dto.title } : {}),
-        ...(clean !== undefined ? { content: clean } : {}),
-        ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
-      },
+    const ok = await this.prisma.$transaction(async (tx) => {
+      // 1) actualizar si es del usuario
+      const { count } = await tx.article.updateMany({
+        where: { id, author_id: userId },
+        data: {
+          ...(dto.title !== undefined ? { title: dto.title } : {}),
+          ...(clean !== undefined ? { content: clean } : {}),
+          ...(dto.image_url !== undefined ? { image_url: dto.image_url } : {}),
+        },
+      });
+      if (count === 0) return false;
+
+      // 2) sincronizar tags si se envían
+      if (dto.tags !== undefined) {
+        const desiredTagIds: number[] = [];
+        for (const t of dto.tags) {
+          const ctx =
+            t.type === 'artist'
+              ? {}
+              : t.type === 'album'
+                ? { artistName: t.artistName ?? '' }
+                : {
+                    artistName: t.artistName ?? '',
+                    albumName: t.albumName ?? '',
+                  };
+
+          const { itemId } = await this.itemService.ensureItemByTypeAndName(
+            t.type as any,
+            t.name,
+            ctx as any,
+          );
+
+          let tag = await tx.tag.findFirst({
+            where: { name: t.name, item_id: itemId },
+            select: { id: true },
+          });
+          if (!tag) {
+            tag = await tx.tag.create({
+              data: { name: t.name, item_id: itemId },
+              select: { id: true },
+            });
+          }
+          desiredTagIds.push(tag.id);
+        }
+
+        const current = await tx.article_tag.findMany({
+          where: { article_id: id },
+          select: { tag_id: true },
+        });
+        const currentIds = new Set(current.map((x) => x.tag_id));
+        const desiredIds = new Set(desiredTagIds);
+
+        const toDelete = [...currentIds].filter((x) => !desiredIds.has(x));
+        const toCreate = [...desiredIds].filter((x) => !currentIds.has(x));
+
+        if (toDelete.length) {
+          await tx.article_tag.deleteMany({
+            where: { article_id: id, tag_id: { in: toDelete } },
+          });
+        }
+        for (const tagId of toCreate) {
+          await tx.article_tag.create({
+            data: { article_id: id, tag_id: tagId },
+          });
+        }
+      }
+
+      return true;
     });
-    return count > 0;
+
+    return ok;
   }
 
   async removeOwned(id: number, userId: number) {
@@ -291,5 +404,23 @@ export class ArticlesService {
       where: { id, author_id: userId },
     });
     return count > 0;
+  }
+
+  private handlePrismaError(e: any, action: string, id?: number): never {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2025: registro no encontrado (update/delete)
+      if (e.code === 'P2025') {
+        throw new NotFoundException(
+          `No se pudo ${action} el artículo${id ? ` con id ${id}` : ''}: no existe`,
+        );
+      }
+      // FK violation u otros errores de integridad
+      if (e.code === 'P2003') {
+        throw new BadRequestException(
+          'Violación de clave foránea (¿author_id existe?).',
+        );
+      }
+    }
+    throw new BadRequestException(`Error al ${action} el artículo`);
   }
 }
