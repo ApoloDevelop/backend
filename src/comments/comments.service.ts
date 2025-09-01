@@ -80,8 +80,20 @@ export class CommentsService {
       include: { other_comment: { select: { id: true } } },
     });
     if (!existing) throw new NotFoundException('Comentario no encontrado.');
-    if (existing.user_id !== userId)
+
+    // Obtener información del usuario que intenta eliminar
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, role_id: true },
+    });
+    if (!user) throw new ForbiddenException('Usuario no encontrado.');
+
+    // Verificar permisos: propietario del comentario O roles admin/editor (1 o 2)
+    const canDelete =
+      existing.user_id === userId || [1, 2].includes(user.role_id);
+    if (!canDelete) {
       throw new ForbiddenException('No puedes borrar este comentario.');
+    }
 
     // Si tiene hijos, bórralos primero para evitar fallo de FK
     if (existing.other_comment.length > 0) {

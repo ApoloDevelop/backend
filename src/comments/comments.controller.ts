@@ -7,16 +7,18 @@ import {
   Post,
   Query,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsDto } from './dto/list-comments.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller()
 export class CommentsController {
   constructor(private readonly comments: CommentsService) {}
 
-  // GET /articles/:articleId/comments?limit=&cursor=
   @Get('articles/:articleId/comments')
   async listForArticle(
     @Param('articleId', ParseIntPipe) articleId: number,
@@ -25,21 +27,22 @@ export class CommentsController {
     return this.comments.listForArticle(articleId, query);
   }
 
-  // POST /articles/:articleId/comments  (body: { user_id, content, parent_id? })
+  @UseGuards(JwtAuthGuard)
   @Post('articles/:articleId/comments')
   async create(
     @Param('articleId', ParseIntPipe) articleId: number,
     @Body() dto: CreateCommentDto,
+    @CurrentUser() user: any,
   ) {
-    return this.comments.create(articleId, dto);
+    return this.comments.create(articleId, { ...dto, user_id: user.id });
   }
 
-  // DELETE /comments/:id  (body: { user_id })
+  @UseGuards(JwtAuthGuard)
   @Delete('comments/:id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Body('user_id', ParseIntPipe) user_id: number,
+    @CurrentUser() user: any,
   ) {
-    return this.comments.hardDelete(id, user_id);
+    return this.comments.hardDelete(id, user.id);
   }
 }

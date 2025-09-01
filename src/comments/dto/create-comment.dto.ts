@@ -9,10 +9,11 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateCommentDto {
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  user_id!: number; // TEMPORAL: hasta tener guard
+  user_id?: number; // Se establece automáticamente desde el usuario autenticado
 
   @IsString()
   @MinLength(1)
