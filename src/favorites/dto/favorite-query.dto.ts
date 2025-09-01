@@ -4,8 +4,9 @@ import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class FavoriteQueryDto {
   @Type(() => Number)
+  @IsOptional()
   @IsInt()
-  userId!: number;
+  userId?: number;
 
   @IsEnum(['artist', 'album', 'track', 'venue'] as const)
   type!: 'artist' | 'album' | 'track' | 'venue';

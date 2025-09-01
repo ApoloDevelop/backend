@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -39,27 +39,51 @@ export class ListsService {
     });
   }
 
-  async addItemToList({ listId, itemId }: { listId: number; itemId: number }) {
+  async addItemToList({
+    userId,
+    listId,
+    itemId,
+  }: {
+    userId: number;
+    listId: number;
+    itemId: number;
+  }) {
+    // Verifica que la lista es del usuario
+    const owns = await this.prisma.custom_list.findFirst({
+      where: { id: listId, userId },
+      select: { id: true },
+    });
+    if (!owns)
+      throw new ForbiddenException(
+        'No puedes modificar listas de otro usuario',
+      );
+
+    // (opcional) si tienes UNIQUE(listId,itemId), esto fallará si ya existe
     return this.prisma.custom_list_item.create({
-      data: {
-        listId,
-        itemId,
-      },
+      data: { listId, itemId },
     });
   }
 
   async removeItemFromList({
+    userId,
     listId,
     itemId,
   }: {
+    userId: number;
     listId: number;
     itemId: number;
   }) {
-    return this.prisma.custom_list_item.deleteMany({
-      where: {
-        listId,
-        itemId,
-      },
+    const owns = await this.prisma.custom_list.findFirst({
+      where: { id: listId, userId },
+      select: { id: true },
+    });
+    if (!owns)
+      throw new ForbiddenException(
+        'No puedes modificar listas de otro usuario',
+      );
+
+    await this.prisma.custom_list_item.deleteMany({
+      where: { listId, itemId },
     });
   }
 }

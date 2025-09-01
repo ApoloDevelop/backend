@@ -104,6 +104,7 @@ model custom_list_item {
   list    custom_list @relation(fields: [listId], references: [id], onDelete: Cascade)
   item    item       @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
+  @@unique([listId, itemId], name: "uq_custom_list_item")
   @@id([listId, itemId])
   @@index([itemId])
 }
