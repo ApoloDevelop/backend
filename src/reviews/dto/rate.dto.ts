@@ -16,8 +16,9 @@ export class RateDto {
   @IsString()
   name!: string; // nombre del artista/álbum/track/venue
 
+  @IsOptional()
   @IsInt()
-  userId!: number;
+  userId?: number;
 
   @IsNumber()
   @Min(0)

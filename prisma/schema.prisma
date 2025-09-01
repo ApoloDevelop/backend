@@ -242,6 +242,7 @@ model review {
   @@index([item_id], map: "fk_item_review")
   @@index([user_id], map: "user_id")
   @@index([item_id, verified, created_at])
+  @@unique([user_id, item_id])
 }
 
 model review_vote {

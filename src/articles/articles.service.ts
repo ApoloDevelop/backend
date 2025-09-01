@@ -28,15 +28,32 @@ export class ArticlesService {
       100,
       Math.max(1, Number.isFinite(query.limit!) ? query.limit! : 10),
     );
+    const q = (query.q ?? '').trim();
+
+    const where = q
+      ? {
+          OR: [
+            { title: { contains: q } },
+            {
+              article_tag: {
+                some: {
+                  tag: {
+                    name: { contains: q },
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : {};
 
     const [total, data] = await this.prisma.$transaction([
-      this.prisma.article.count(),
+      this.prisma.article.count({ where }),
       this.prisma.article.findMany({
+        where,
         skip: safeOffset,
         take: safeLimit,
         orderBy: { published_date: 'desc' },
-        // Si más adelante quieres traer el autor o tags:
-        // include: { user: { select: { id: true, username: true } }, article_tag: true },
       }),
     ]);
 

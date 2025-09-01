@@ -1,5 +1,5 @@
 // src/articles/dto/list-articles.dto.ts
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ListArticlesDto {
@@ -15,4 +15,8 @@ export class ListArticlesDto {
   @Min(1)
   @Max(100)
   limit?: number = 20;
+
+  @IsOptional()
+  @IsString()
+  q?: string;
 }

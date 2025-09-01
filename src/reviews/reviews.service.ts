@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -11,8 +15,8 @@ type RateArgs = {
   score: number;
   comment?: string;
   title?: string;
-  artistName?: string; // para album/track
-  location?: string; // para venue
+  artistName?: string;
+  location?: string;
 };
 
 type VoteValue = 1 | -1;
@@ -151,13 +155,25 @@ export class ReviewsService {
     });
   }
 
-  async rate(dto: RateArgs) {
+  async rate(dto: RateArgs, isVerifiedUser: boolean) {
     const itemId = await this.resolveItemId(dto);
-    // Si añades @@unique([user_id, item_id]) en review, usa upsert
-    return this.prisma.review.create({
-      data: {
+
+    return this.prisma.review.upsert({
+      where: {
+        user_id_item_id: {
+          user_id: dto.userId,
+          item_id: itemId,
+        },
+      },
+      create: {
         user_id: dto.userId,
         item_id: itemId,
+        score: dto.score,
+        text: dto.comment,
+        title: dto.title,
+        verified: isVerifiedUser ? 1 : 0,
+      },
+      update: {
         score: dto.score,
         text: dto.comment,
         title: dto.title,
@@ -373,5 +389,35 @@ export class ReviewsService {
       data: { value },
     });
     return { ok: true, action: 'updated', value };
+  }
+
+  async getMyReviewForItem(itemId: number, userId: number) {
+    if (!itemId || !userId) return null;
+
+    return this.prisma.review.findUnique({
+      where: {
+        user_id_item_id: { user_id: userId, item_id: itemId }, // ⬅️ findUnique
+      },
+      select: { id: true, score: true, title: true, text: true },
+    });
+  }
+
+  async removeByPolicy(
+    reviewId: number,
+    user: { id: number; role_id: number },
+  ) {
+    // Admin o Mod → borran cualquier reseña
+    if (user.role_id === 1 || user.role_id === 2) {
+      await this.prisma.review.delete({ where: { id: reviewId } });
+      return { ok: true };
+    }
+
+    // Si no es admin/mod, solo puede borrar la suya
+    const { count } = await this.prisma.review.deleteMany({
+      where: { id: reviewId, user_id: user.id },
+    });
+    if (count === 0)
+      throw new ForbiddenException('No puedes borrar esta reseña');
+    return { ok: true };
   }
 }

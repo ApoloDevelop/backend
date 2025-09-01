@@ -5,17 +5,30 @@ import {
   Get,
   Query,
   ParseIntPipe,
+  UseGuards,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { RateDto } from './dto/rate.dto';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guard/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
   @Post('rate')
-  async rate(@Body() dto: RateDto) {
-    return this.reviewsService.rate(dto);
+  async rate(@Body() dto: RateDto, @CurrentUser() user: any) {
+    const isVerified = Number(user.role_id) === 4;
+    return this.reviewsService.rate(
+      { ...dto, userId: Number(user.id) },
+      isVerified,
+    );
   }
 
   @Get('artist/average')
@@ -75,13 +88,40 @@ export class ReviewsController {
     });
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
   @Post('vote')
   vote(
-    @Body() body: { reviewId: number; value: 1 | -1; userId: number | string },
+    @Body() body: { reviewId: number; value: 1 | -1 },
+    @CurrentUser() user: any,
   ) {
     const reviewId = Number(body.reviewId);
-    const userId = Number(body.userId);
+    const userId = Number(user.id);
     const value = Number(body.value) as 1 | -1;
     return this.reviewsService.voteReview(reviewId, userId, value);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
+  @Get('mine')
+  async getMyReview(
+    @Query('itemId', ParseIntPipe) itemId: number,
+    @CurrentUser() user: any,
+  ) {
+    const r = await this.reviewsService.getMyReviewForItem(
+      itemId,
+      Number(user.id),
+    );
+    return r ?? null;
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5) // cualquier user logueado puede intentar borrar; la política se aplica en el service
+  @Delete(':id')
+  removeById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+    return this.reviewsService.removeByPolicy(id, {
+      id: Number(user.id),
+      role_id: Number(user.role_id),
+    });
   }
 }
