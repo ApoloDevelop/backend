@@ -156,7 +156,10 @@ export class SpotifyService {
         (!targetArtist ||
           a.artists?.some((x: any) => fold(x.name) === targetArtist)),
     );
-    if (match) return match;
+    if (match) {
+      // Obtener información completa del álbum
+      return await this.getCompleteAlbumInfo(match.id);
+    }
 
     if (artistName) {
       const artist = await this.fetchArtistByName(artistName);
@@ -169,7 +172,10 @@ export class SpotifyService {
           data = await res.json();
           items = data.items ?? [];
           match = items.find((a: any) => fold(a.name) === targetAlbum);
-          if (match) return match;
+          if (match) {
+            // Obtener información completa del álbum
+            return await this.getCompleteAlbumInfo(match.id);
+          }
         }
         //sin market
         res = await fetch(
@@ -180,7 +186,10 @@ export class SpotifyService {
           data = await res.json();
           items = data.items ?? [];
           match = items.find((a: any) => fold(a.name) === targetAlbum);
-          if (match) return match;
+          if (match) {
+            // Obtener información completa del álbum
+            return await this.getCompleteAlbumInfo(match.id);
+          }
         }
       }
     }
@@ -199,10 +208,29 @@ export class SpotifyService {
           (!targetArtist ||
             a.artists?.some((x: any) => fold(x.name) === targetArtist)),
       );
-      if (match) return match;
+      if (match) {
+        // Obtener información completa del álbum
+        return await this.getCompleteAlbumInfo(match.id);
+      }
     }
 
     return null;
+  }
+
+  // Nuevo método para obtener información completa del álbum
+  private async getCompleteAlbumInfo(albumId: string) {
+    const token = await this.getAccessToken();
+    
+    const res = await fetch(
+      `https://api.spotify.com/v1/albums/${albumId}?market=ES`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    
+    if (!res.ok) {
+      throw new InternalServerErrorException('Error obteniendo información completa del álbum');
+    }
+    
+    return await res.json();
   }
 
   async fetchAlbumTracks(albumId: string) {
