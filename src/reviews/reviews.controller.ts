@@ -68,6 +68,19 @@ export class ReviewsController {
     return this.reviewsService.getAlbumReviewStats(albumName, artistName);
   }
 
+  @Get('track/stats')
+  async getTrackStats(
+    @Query('trackName') trackName: string,
+    @Query('artistName') artistName?: string,
+    @Query('albumName') albumName?: string,
+  ) {
+    return this.reviewsService.getTrackReviewStats(
+      trackName,
+      artistName,
+      albumName,
+    );
+  }
+
   @Get('item/reviews')
   getByItem(
     @Query('itemId', ParseIntPipe) itemId: number,

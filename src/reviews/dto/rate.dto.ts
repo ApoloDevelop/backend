@@ -40,5 +40,9 @@ export class RateDto {
 
   @IsOptional()
   @IsString()
+  albumName?: string; // REQUERIDO para track
+
+  @IsOptional()
+  @IsString()
   location?: string; // opcional para venue
 }
