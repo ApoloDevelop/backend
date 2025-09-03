@@ -8,6 +8,7 @@ import { GoogleStrategy } from './strategies/google.strategy';
 import { SpotifyStrategy } from './strategies/spotify.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './guard/optional-jwt-auth.guard';
 import { RolesGuard } from './guard/roles.guard';
 
 @Module({
@@ -18,6 +19,7 @@ import { RolesGuard } from './guard/roles.guard';
     SpotifyStrategy,
     JwtStrategy,
     JwtAuthGuard,
+    OptionalJwtAuthGuard,
     RolesGuard,
   ],
   imports: [

@@ -75,4 +75,110 @@ export class UsersService {
   remove(id: number) {
     return `This action removes a #${id} user`;
   }
+
+  async followUser(currentUserId: number, targetUserId: number) {
+    if (currentUserId === targetUserId) {
+      throw new BadRequestException('No puedes seguirte a ti mismo');
+    }
+
+    // Upsert idempotente por la única compuesta (seguidor_id, seguido_id)
+    await this.prisma.follow.upsert({
+      where: {
+        seguidor_id_seguido_id: {
+          seguidor_id: currentUserId,
+          seguido_id: targetUserId,
+        },
+      },
+      update: {},
+      create: {
+        seguidor_id: currentUserId,
+        seguido_id: targetUserId,
+      },
+    });
+
+    return { following: true };
+  }
+
+  async unfollowUser(currentUserId: number, targetUserId: number) {
+    await this.prisma.follow.deleteMany({
+      where: {
+        seguidor_id: currentUserId,
+        seguido_id: targetUserId,
+      },
+    });
+    return { following: false };
+  }
+
+  async getFollowCounts(userId: number) {
+    const [followers, following] = await Promise.all([
+      this.prisma.follow.count({ where: { seguido_id: userId } }),
+      this.prisma.follow.count({ where: { seguidor_id: userId } }),
+    ]);
+    return { followers, following };
+  }
+
+  async getFollowSummary(viewerId: number | null, profileUserId: number) {
+    const counts = await this.getFollowCounts(profileUserId);
+
+    let isFollowing = false;
+    let isFollowedBy = false;
+
+    if (viewerId) {
+      const [a, b] = await Promise.all([
+        this.prisma.follow.count({
+          where: { seguidor_id: viewerId, seguido_id: profileUserId },
+        }),
+        this.prisma.follow.count({
+          where: { seguidor_id: profileUserId, seguido_id: viewerId },
+        }),
+      ]);
+      isFollowing = a > 0;
+      isFollowedBy = b > 0;
+    }
+
+    return { ...counts, isFollowing, isFollowedBy };
+  }
+
+  async listFollowers(userId: number, skip = 0, take = 20) {
+    const rows = await this.prisma.follow.findMany({
+      where: { seguido_id: userId },
+      skip,
+      take,
+      orderBy: { fecha_seguimiento: 'desc' },
+      include: {
+        user_follow_seguidor_idTouser: {
+          select: {
+            id: true,
+            username: true,
+            fullname: true,
+            profile_pic: true,
+          },
+        },
+      },
+    });
+
+    // normaliza a lista de usuarios
+    return rows.map((r) => r.user_follow_seguidor_idTouser);
+  }
+
+  async listFollowing(userId: number, skip = 0, take = 20) {
+    const rows = await this.prisma.follow.findMany({
+      where: { seguidor_id: userId },
+      skip,
+      take,
+      orderBy: { fecha_seguimiento: 'desc' },
+      include: {
+        user_follow_seguido_idTouser: {
+          select: {
+            id: true,
+            username: true,
+            fullname: true,
+            profile_pic: true,
+          },
+        },
+      },
+    });
+
+    return rows.map((r) => r.user_follow_seguido_idTouser);
+  }
 }
