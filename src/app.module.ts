@@ -15,6 +15,7 @@ import { GeoModule } from './geo/geo.module';
 import { ArticlesModule } from './articles/articles.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CommentsModule } from './comments/comments.module';
+import { ActivityModule } from './activity/activity.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CommentsModule } from './comments/comments.module';
     ArticlesModule,
     CloudinaryModule,
     CommentsModule,
+    ActivityModule,
   ],
 })
 export class AppModule {}
