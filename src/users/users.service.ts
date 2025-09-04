@@ -157,7 +157,7 @@ export class UsersService {
     return { ...counts, isFollowing, isFollowedBy };
   }
 
-  async listFollowers(userId: number, skip = 0, take = 20) {
+  async listFollowers(userId: number, skip = 0, take = 20, currentUserId?: number) {
     const rows = await this.prisma.follow.findMany({
       where: { seguido_id: userId },
       skip,
@@ -175,11 +175,31 @@ export class UsersService {
       },
     });
 
-    // normaliza a lista de usuarios
-    return rows.map((r) => r.user_follow_seguidor_idTouser);
+    // normaliza a lista de usuarios con información de seguimiento
+    const users = rows.map((r) => r.user_follow_seguidor_idTouser);
+    
+    // Si hay usuario actual, verificar qué usuarios está siguiendo
+    if (currentUserId) {
+      const followingIds = await this.prisma.follow.findMany({
+        where: { 
+          seguidor_id: currentUserId,
+          seguido_id: { in: users.map(u => u.id) }
+        },
+        select: { seguido_id: true }
+      });
+      
+      const followingSet = new Set(followingIds.map(f => f.seguido_id));
+      
+      return users.map(user => ({
+        ...user,
+        isFollowing: user.id !== currentUserId ? followingSet.has(user.id) : null
+      }));
+    }
+    
+    return users.map(user => ({ ...user, isFollowing: null }));
   }
 
-  async listFollowing(userId: number, skip = 0, take = 20) {
+  async listFollowing(userId: number, skip = 0, take = 20, currentUserId?: number) {
     const rows = await this.prisma.follow.findMany({
       where: { seguidor_id: userId },
       skip,
@@ -197,6 +217,27 @@ export class UsersService {
       },
     });
 
-    return rows.map((r) => r.user_follow_seguido_idTouser);
+    // normaliza a lista de usuarios con información de seguimiento
+    const users = rows.map((r) => r.user_follow_seguido_idTouser);
+    
+    // Si hay usuario actual, verificar qué usuarios está siguiendo
+    if (currentUserId) {
+      const followingIds = await this.prisma.follow.findMany({
+        where: { 
+          seguidor_id: currentUserId,
+          seguido_id: { in: users.map(u => u.id) }
+        },
+        select: { seguido_id: true }
+      });
+      
+      const followingSet = new Set(followingIds.map(f => f.seguido_id));
+      
+      return users.map(user => ({
+        ...user,
+        isFollowing: user.id !== currentUserId ? followingSet.has(user.id) : null
+      }));
+    }
+    
+    return users.map(user => ({ ...user, isFollowing: null }));
   }
 }

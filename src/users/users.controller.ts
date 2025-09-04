@@ -102,29 +102,35 @@ export class UsersController {
     );
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id/followers')
   async followers(
     @Param('id') profileId: string,
     @Query('skip') skip = '0',
     @Query('take') take = '20',
+    @CurrentUser() user: any,
   ) {
     return this.usersService.listFollowers(
       Number(profileId),
       Number(skip),
       Number(take),
+      user ? Number(user.id) : null,
     );
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':id/following')
   async following(
     @Param('id') profileId: string,
     @Query('skip') skip = '0',
     @Query('take') take = '20',
+    @CurrentUser() user: any,
   ) {
     return this.usersService.listFollowing(
       Number(profileId),
       Number(skip),
       Number(take),
+      user ? Number(user.id) : null,
     );
   }
 
