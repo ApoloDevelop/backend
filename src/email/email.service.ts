@@ -89,8 +89,7 @@ export class EmailService {
     try {
       const info = await this.transporter.sendMail(mailOptions);
 
-      console.log('📧 Email sent successfully to:', email);
-      console.log('🌐 Preview URL:', nodemailer.getTestMessageUrl(info));
+      console.log('Email sent successfully to:', email);
     } catch (error) {
       console.error('Error sending email:', error);
       throw new Error('Error al enviar el email de recuperación');
