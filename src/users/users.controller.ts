@@ -133,9 +133,10 @@ export class UsersController {
   async deleteUser(@Param('id') id: string, @CurrentUser() user: any) {
     const targetUserId = Number(id);
     const currentUserId = Number(user.id);
+    const isAdmin = user.role_id === 1;
 
-    // Solo el propio usuario puede eliminar su cuenta
-    if (targetUserId !== currentUserId) {
+    // Solo el propio usuario puede eliminar su cuenta, o un administrador puede eliminar cualquier cuenta
+    if (targetUserId !== currentUserId && !isAdmin) {
       throw new NotFoundException(
         'No tienes permisos para eliminar esta cuenta',
       );
