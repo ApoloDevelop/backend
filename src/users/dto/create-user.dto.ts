@@ -86,6 +86,10 @@ export class CreateUserDto {
 
   @IsUrl()
   @IsOptional()
+  tiktok_link?: string;
+
+  @IsUrl()
+  @IsOptional()
   external_url?: string;
 
   @IsString()

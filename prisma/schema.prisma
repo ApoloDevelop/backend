@@ -328,6 +328,7 @@ model user {
   instagram_link                  String?         @db.VarChar(255)
   twitter_link                    String?         @db.VarChar(255)
   youtube_link                    String?         @db.VarChar(255)
+  tiktok_link                     String?         @db.VarChar(255)
   external_url                    String?         @db.VarChar(255)
   biography                       String?         @db.VarChar(1500)
   profile_pic                     String?         @db.VarChar(255)
