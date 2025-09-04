@@ -1,6 +1,7 @@
 // favorites/favorites.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ItemService } from '../item/item.service';
 
 type FavType = 'artist' | 'album' | 'track' | 'venue';
 
@@ -14,7 +15,10 @@ type FavContext = {
 
 @Injectable()
 export class FavoritesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly itemService: ItemService,
+  ) {}
 
   // ===== Helpers de resolución =====
 
@@ -60,130 +64,17 @@ export class FavoritesService {
     return venue ? venue.item_id : null;
   }
 
-  /** CREA si no existe (y relaciona con artist cuando aplique) */
   private async resolveOrCreateItemId(
     ctx: Omit<FavContext, 'userId'>,
   ): Promise<number> {
     const { type, name, artistName, location } = ctx;
 
-    return this.prisma.$transaction(async (tx) => {
-      if (type === 'artist') {
-        let artist = await tx.artist.findFirst({ where: { name } });
-        if (!artist) {
-          const item = await tx.item.create({
-            data: { item_type: 'artist', item_id: 0 },
-          });
-          artist = await tx.artist.create({ data: { name, item_id: item.id } });
-          await tx.item.update({
-            where: { id: item.id },
-            data: { item_id: artist.id },
-          });
-        }
-        return artist.item_id;
-      }
-
-      if (type === 'album') {
-        if (!artistName)
-          throw new BadRequestException('artistName es obligatorio para album');
-
-        let artist = await tx.artist.findFirst({ where: { name: artistName } });
-        if (!artist) {
-          const ai = await tx.item.create({
-            data: { item_type: 'artist', item_id: 0 },
-          });
-          artist = await tx.artist.create({
-            data: { name: artistName, item_id: ai.id },
-          });
-          await tx.item.update({
-            where: { id: ai.id },
-            data: { item_id: artist.id },
-          });
-        }
-
-        let album = await tx.album.findFirst({
-          where: { name, album_artist: { some: { id_artist: artist.id } } },
-        });
-        if (!album) {
-          const item = await tx.item.create({
-            data: { item_type: 'album', item_id: 0 },
-          });
-          album = await tx.album.create({ data: { name, item_id: item.id } });
-          await tx.item.update({
-            where: { id: item.id },
-            data: { item_id: album.id },
-          });
-          await tx.album_artist.create({
-            data: { id_album: album.id, id_artist: artist.id },
-          });
-        }
-        return album.item_id;
-      }
-
-      if (type === 'track') {
-        if (!artistName)
-          throw new BadRequestException('artistName es obligatorio para track');
-
-        let artist = await tx.artist.findFirst({ where: { name: artistName } });
-        if (!artist) {
-          const ai = await tx.item.create({
-            data: { item_type: 'artist', item_id: 0 },
-          });
-          artist = await tx.artist.create({
-            data: { name: artistName, item_id: ai.id },
-          });
-          await tx.item.update({
-            where: { id: ai.id },
-            data: { item_id: artist.id },
-          });
-        }
-
-        let track = await tx.track.findFirst({
-          where: {
-            title: name,
-            track_artist: { some: { artist_id: artist.id } },
-          },
-        });
-        if (!track) {
-          const item = await tx.item.create({
-            data: { item_type: 'track', item_id: 0 },
-          });
-          track = await tx.track.create({
-            data: { title: name, item_id: item.id },
-          });
-          await tx.item.update({
-            where: { id: item.id },
-            data: { item_id: track.id },
-          });
-          await tx.track_artist.create({
-            data: { track_id: track.id, artist_id: artist.id },
-          });
-        }
-        return track.item_id;
-      }
-
-      // venue
-      let venue = await tx.venue.findFirst({
-        where: { name, ...(location ? { location } : {}) },
-      });
-      if (!venue) {
-        const item = await tx.item.create({
-          data: { item_type: 'venue', item_id: 0 },
-        });
-        venue = await tx.venue.create({
-          data: {
-            name,
-            location: location ?? '',
-            venue_type: 'other',
-            item_id: item.id,
-          },
-        });
-        await tx.item.update({
-          where: { id: item.id },
-          data: { item_id: venue.id },
-        });
-      }
-      return venue.item_id;
+    const result = await this.itemService.ensureItemByTypeAndName(type, name, {
+      artistName,
+      location,
     });
+
+    return result.itemId;
   }
 
   // ===== API =====
