@@ -40,6 +40,16 @@ export class FavoritesController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(1, 2, 3, 4, 5)
+  @Get('all')
+  async getAllFavorites(@CurrentUser() user: any) {
+    const favorites = await this.favoritesService.getAllUserFavorites(
+      Number(user.id),
+    );
+    return favorites;
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
   @Post()
   @HttpCode(201)
   async addFavorite(@Body() body: FavoriteBodyDto, @CurrentUser() user: any) {

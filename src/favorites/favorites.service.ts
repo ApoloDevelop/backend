@@ -236,4 +236,82 @@ export class FavoritesService {
       where: { user: query.userId, item_id: itemId },
     });
   }
+
+  async getAllUserFavorites(userId: number): Promise<any[]> {
+    const favorites = await this.prisma.favorite.findMany({
+      where: { user: userId },
+      include: {
+        item: {
+          include: {
+            artist: true,
+            album: {
+              include: {
+                album_artist: {
+                  include: {
+                    artist: true,
+                  },
+                },
+              },
+            },
+            track: {
+              include: {
+                track_artist: {
+                  include: {
+                    artist: true,
+                  },
+                },
+                track_album: {
+                  include: {
+                    album: true,
+                  },
+                },
+              },
+            },
+            venue: true,
+          },
+        },
+      },
+      orderBy: {
+        created_date: 'desc',
+      },
+    });
+
+    return favorites.map((fav) => {
+      const item = fav.item;
+      const itemType = item.item_type;
+
+      let name = '';
+      let artistName = '';
+      let albumName = '';
+
+      switch (itemType) {
+        case 'artist':
+          name = item.artist?.[0]?.name || '';
+          break;
+        case 'album':
+          name = item.album?.[0]?.name || '';
+          artistName = item.album?.[0]?.album_artist?.[0]?.artist?.name || '';
+          break;
+        case 'track':
+          name = item.track?.[0]?.title || '';
+          artistName = item.track?.[0]?.track_artist?.[0]?.artist?.name || '';
+          albumName = item.track?.[0]?.track_album?.[0]?.album?.name || '';
+          break;
+        case 'venue':
+          name = item.venue?.[0]?.name || '';
+          break;
+      }
+
+      return {
+        itemId: fav.item_id,
+        type: itemType,
+        item: {
+          id: fav.item_id,
+          name,
+          artistName,
+          albumName,
+        },
+      };
+    });
+  }
 }
