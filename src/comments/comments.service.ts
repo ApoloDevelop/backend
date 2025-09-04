@@ -7,10 +7,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { ListCommentsDto } from './dto/list-comments.dto';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class CommentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   // Lista padres (paginados por cursor) + sus hijos
   async listForArticle(
@@ -52,19 +56,50 @@ export class CommentsService {
     if (dto.parent_id) {
       const parent = await this.prisma.comment.findUnique({
         where: { id: dto.parent_id },
+        include: {
+          user: { select: { id: true, username: true } },
+          article: { select: { title: true } },
+        },
       });
+
       if (!parent || parent.article_id !== articleId) {
         throw new BadRequestException(
           'El comentario padre no existe o no corresponde a este artículo.',
         );
       }
+
+      // Crear el comentario de respuesta
+      const newComment = await this.prisma.comment.create({
+        data: {
+          article_id: articleId,
+          user_id: dto.user_id,
+          parent_id: dto.parent_id,
+          content: dto.content.trim(),
+        },
+        include: {
+          user: { select: { id: true, username: true, profile_pic: true } },
+        },
+      });
+
+      // Solo generar notificación si no es el mismo usuario respondiendo a su propio comentario
+      if (parent.user.id !== dto.user_id) {
+        // Crear notificación de respuesta a comentario
+        await this.notificationsService.createCommentReplyNotification(
+          parent.user.id,
+          newComment.id,
+          newComment.user.username,
+          parent.article.title,
+        );
+      }
+
+      return newComment;
     }
 
     return this.prisma.comment.create({
       data: {
         article_id: articleId,
         user_id: dto.user_id,
-        parent_id: dto.parent_id ?? null,
+        parent_id: null,
         content: dto.content.trim(),
       },
       include: {

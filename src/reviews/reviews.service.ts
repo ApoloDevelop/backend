@@ -6,6 +6,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { ItemService } from 'src/item/item.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 type RateableType = 'artist' | 'album' | 'track' | 'venue';
 
@@ -28,6 +29,7 @@ export class ReviewsService {
   constructor(
     private prisma: PrismaService,
     private itemService: ItemService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async rate(dto: RateArgs, isVerifiedUser: boolean) {
@@ -307,6 +309,18 @@ export class ReviewsService {
       throw new BadRequestException('vote value must be 1 or -1');
     }
 
+    // Obtener información de la review y su autor
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        user: { select: { id: true, username: true } },
+      },
+    });
+
+    if (!review) {
+      throw new BadRequestException('Review not found');
+    }
+
     // toggle: mismo valor -> borra; distinto -> actualiza; inexistente -> crea
     const existing = await this.prisma.review_vote.findUnique({
       where: { user_id_review_id: { user_id: userId, review_id: reviewId } },
@@ -316,6 +330,25 @@ export class ReviewsService {
       await this.prisma.review_vote.create({
         data: { user_id: userId, review_id: reviewId, value },
       });
+
+      // Generar notificación solo si es un upvote positivo y no es el autor votando su propia review
+      if (value === 1 && review.user.id !== userId) {
+        // Obtener información del votante
+        const voter = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { username: true },
+        });
+
+        if (voter) {
+          await this.notificationsService.createReviewUpvoteNotification(
+            review.user.id,
+            reviewId,
+            voter.username,
+            review.title || 'tu review',
+          );
+        }
+      }
+
       return { ok: true, action: 'created', value };
     }
 
@@ -330,6 +363,24 @@ export class ReviewsService {
       where: { user_id_review_id: { user_id: userId, review_id: reviewId } },
       data: { value },
     });
+
+    // Generar notificación si cambió a upvote positivo y no es el autor
+    if (value === 1 && review.user.id !== userId) {
+      const voter = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true },
+      });
+
+      if (voter) {
+        await this.notificationsService.createReviewUpvoteNotification(
+          review.user.id,
+          reviewId,
+          voter.username,
+          review.title || 'tu review',
+        );
+      }
+    }
+
     return { ok: true, action: 'updated', value };
   }
 

@@ -4,10 +4,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { user as User } from '@prisma/client';
 import * as bcryptjs from 'bcryptjs';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async findAllUsers(): Promise<User[]> {
     return this.prisma.user.findMany();
@@ -99,20 +103,42 @@ export class UsersService {
       throw new BadRequestException('No puedes seguirte a ti mismo');
     }
 
-    // Upsert idempotente por la única compuesta (seguidor_id, seguido_id)
-    await this.prisma.follow.upsert({
+    // Verificar si ya sigue al usuario
+    const existingFollow = await this.prisma.follow.findUnique({
       where: {
         seguidor_id_seguido_id: {
           seguidor_id: currentUserId,
           seguido_id: targetUserId,
         },
       },
-      update: {},
-      create: {
+    });
+
+    if (existingFollow) {
+      return { following: true };
+    }
+
+    // Crear el seguimiento
+    await this.prisma.follow.create({
+      data: {
         seguidor_id: currentUserId,
         seguido_id: targetUserId,
       },
     });
+
+    // Obtener información del seguidor para la notificación
+    const follower = await this.prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { username: true },
+    });
+
+    // Crear notificación
+    if (follower) {
+      await this.notificationsService.createNewFollowerNotification(
+        targetUserId,
+        currentUserId,
+        follower.username,
+      );
+    }
 
     return { following: true };
   }
