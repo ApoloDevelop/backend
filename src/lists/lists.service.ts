@@ -93,7 +93,42 @@ export class ListsService {
       include: {
         listItems: {
           include: {
-            item: true,
+            item: {
+              include: {
+                artist: true,
+                album: {
+                  include: {
+                    album_artist: {
+                      include: {
+                        artist: true,
+                      },
+                    },
+                  },
+                },
+                track: {
+                  include: {
+                    track_artist: {
+                      include: {
+                        artist: true,
+                      },
+                    },
+                    track_album: {
+                      include: {
+                        album: {
+                          include: {
+                            album_artist: {
+                              include: {
+                                artist: true,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -105,7 +140,58 @@ export class ListsService {
       );
     }
 
-    return list;
+    // Procesar los datos para incluir el nombre correcto basado en el tipo de item
+    const processedList = {
+      ...list,
+      listItems: list.listItems.map((listItem) => {
+        const item = listItem.item;
+        let processedItem: any = { ...item };
+
+        // Dependiendo del tipo de item, añadir el nombre desde la tabla correspondiente
+        switch (item.item_type) {
+          case 'artist':
+            const artist = item.artist[0]; // Tomamos el primer artista (debería ser único por item_id)
+            if (artist) {
+              processedItem.name = artist.name;
+            }
+            break;
+          case 'album':
+            const album = item.album[0]; // Tomamos el primer álbum
+            if (album) {
+              processedItem.name = album.name;
+              // Obtener el artista del álbum
+              const albumArtist = album.album_artist?.[0]?.artist;
+              if (albumArtist) {
+                processedItem.artistName = albumArtist.name;
+              }
+            }
+            break;
+          case 'track':
+            const track = item.track[0]; // Tomamos la primera canción
+            if (track) {
+              processedItem.name = track.title; // track usa 'title' en lugar de 'name'
+              // Obtener el artista de la canción
+              const trackArtist = track.track_artist?.[0]?.artist;
+              if (trackArtist) {
+                processedItem.artistName = trackArtist.name;
+              }
+              // Obtener el álbum de la canción
+              const trackAlbum = track.track_album?.[0]?.album;
+              if (trackAlbum) {
+                processedItem.albumName = trackAlbum.name;
+              }
+            }
+            break;
+        }
+
+        return {
+          ...listItem,
+          item: processedItem,
+        };
+      }),
+    };
+
+    return processedList;
   }
 
   async deleteList(userId: number, listId: number) {
