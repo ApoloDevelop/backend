@@ -252,4 +252,41 @@ export class UsersService {
 
     return users.map((user) => ({ ...user, isFollowing: null }));
   }
+
+  async searchUsers(query: string, limit = 10) {
+    if (!query || query.trim().length < 2) {
+      return [];
+    }
+
+    const searchTerm = query.trim().toLowerCase();
+
+    return this.prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            username: {
+              contains: searchTerm,
+            },
+          },
+          {
+            fullname: {
+              contains: searchTerm,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        fullname: true,
+        profile_pic: true,
+      },
+      take: limit,
+      orderBy: [
+        {
+          username: 'asc',
+        },
+      ],
+    });
+  }
 }

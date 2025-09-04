@@ -26,6 +26,12 @@ export class UsersController {
     return this.usersService.findAllUsers();
   }
 
+  @Get('search')
+  async searchUsers(@Query('q') query: string, @Query('limit') limit?: string) {
+    const limitNum = limit ? parseInt(limit, 10) : 10;
+    return this.usersService.searchUsers(query, limitNum);
+  }
+
   @Get('email/:email')
   async findUserByEmail(@Param('email') email: string) {
     return await this.usersService.findUserByEmail(email);
