@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   HttpCode,
+  Param,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -69,5 +71,35 @@ export class ListsController {
       listId: Number(dto.listId),
       itemId: Number(dto.itemId),
     });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
+  @Get(':listId')
+  async getListById(@Param('listId') listId: string, @CurrentUser() user: any) {
+    return this.listsService.getListById(Number(user.id), Number(listId));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
+  @Delete(':listId')
+  @HttpCode(204)
+  async deleteList(@Param('listId') listId: string, @CurrentUser() user: any) {
+    await this.listsService.deleteList(Number(user.id), Number(listId));
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1, 2, 3, 4, 5)
+  @Put(':listId')
+  async updateListName(
+    @Param('listId') listId: string,
+    @Body() dto: { name: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.listsService.updateListName(
+      Number(user.id),
+      Number(listId),
+      dto.name,
+    );
   }
 }
