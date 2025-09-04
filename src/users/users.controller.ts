@@ -127,4 +127,20 @@ export class UsersController {
       Number(take),
     );
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string, @CurrentUser() user: any) {
+    const targetUserId = Number(id);
+    const currentUserId = Number(user.id);
+
+    // Solo el propio usuario puede eliminar su cuenta
+    if (targetUserId !== currentUserId) {
+      throw new NotFoundException(
+        'No tienes permisos para eliminar esta cuenta',
+      );
+    }
+
+    return this.usersService.deleteUser(targetUserId);
+  }
 }

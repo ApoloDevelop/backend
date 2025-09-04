@@ -76,6 +76,24 @@ export class UsersService {
     return `This action removes a #${id} user`;
   }
 
+  async deleteUser(userId: number) {
+    // Verificar que el usuario existe
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
+
+    // Eliminar el usuario y todas sus relaciones (Prisma se encarga de las relaciones en cascada)
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return { message: 'Cuenta eliminada exitosamente' };
+  }
+
   async followUser(currentUserId: number, targetUserId: number) {
     if (currentUserId === targetUserId) {
       throw new BadRequestException('No puedes seguirte a ti mismo');
