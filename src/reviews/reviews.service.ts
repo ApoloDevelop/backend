@@ -344,7 +344,6 @@ export class ReviewsService {
             review.user.id,
             reviewId,
             voter.username,
-            review.title || 'tu review',
           );
         }
       }
@@ -376,7 +375,6 @@ export class ReviewsService {
           review.user.id,
           reviewId,
           voter.username,
-          review.title || 'tu review',
         );
       }
     }

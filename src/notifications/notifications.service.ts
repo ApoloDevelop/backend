@@ -255,7 +255,30 @@ export class NotificationsService {
     });
   }
 
+  // Eliminar todas las notificaciones de un usuario
+  async removeAll(userId: number) {
+    return this.prisma.notification.deleteMany({
+      where: {
+        user_id: userId,
+      },
+    });
+  }
+
   // Métodos para crear notificaciones específicas
+
+  // Método helper para obtener el nombre del item según su tipo
+  private getItemName(item: any): string {
+    switch (item.item_type) {
+      case 'artist':
+        return item.artist?.[0]?.name || 'Artista desconocido';
+      case 'album':
+        return item.album?.[0]?.name || 'Álbum desconocido';
+      case 'track':
+        return item.track?.[0]?.title || 'Canción desconocida';
+      default:
+        return 'Item desconocido';
+    }
+  }
 
   // Notificación de respuesta a comentario
   async createCommentReplyNotification(
@@ -293,13 +316,44 @@ export class NotificationsService {
     reviewOwnerId: number,
     reviewId: number,
     voterUsername: string,
-    reviewTitle: string,
   ) {
+    // Obtener la review con el item relacionado
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        item: {
+          include: {
+            artist: {
+              select: {
+                name: true,
+              },
+            },
+            album: {
+              select: {
+                name: true,
+              },
+            },
+            track: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!review || !review.item) {
+      throw new Error('Review o item no encontrado');
+    }
+
+    const itemName = this.getItemName(review.item);
+
     return this.create({
       user_id: reviewOwnerId,
       type: NotificationType.REVIEW_UPVOTE,
       title: 'Tu review recibió un upvote',
-      message: `A ${voterUsername} le gustó tu review "${reviewTitle}"`,
+      message: `A ${voterUsername} le gustó tu review de ${itemName}`,
       review_id: reviewId,
     });
   }
