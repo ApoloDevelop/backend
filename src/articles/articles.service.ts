@@ -1,4 +1,3 @@
-// src/articles/articles.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -111,11 +110,10 @@ export class ArticlesService {
       let albumName: string | undefined;
 
       if (type === 'artist') {
-        // Para comodidad, puedes exponer artistName = name
         artistName = at.tag.name;
       } else if (type === 'album') {
         const album = it.album?.[0];
-        albumName = album?.name ?? at.tag.name; // nombre del tag ya es el álbum
+        albumName = album?.name ?? at.tag.name;
         artistName = album?.album_artist?.[0]?.artist?.name;
       } else if (type === 'track') {
         const tr = it.track?.[0];
@@ -145,7 +143,7 @@ export class ArticlesService {
       console.log('Sanitized content:', clean);
       this.assertNotEmpty(clean, 'content');
       return await this.prisma.$transaction(async (tx) => {
-        // 1) crear artículo
+        //crear artículo
         const article = await tx.article.create({
           data: {
             title: dto.title,
@@ -155,16 +153,15 @@ export class ArticlesService {
           },
         });
 
-        // 2) si vienen tags: asegurar item + crear/usar tag + vincular
+        //si vienen tags: asegurar item + crear/usar tag + vincular
         if (dto.tags?.length) {
           for (const t of dto.tags) {
-            // Asegurar itemId según tipo
             const ctx =
               t.type === 'artist'
                 ? {}
                 : t.type === 'album'
                   ? { artistName: t.artistName ?? '' }
-                  : /* track */ {
+                  : {
                       artistName: t.artistName ?? '',
                       albumName: t.albumName ?? '',
                     };
@@ -215,9 +212,8 @@ export class ArticlesService {
           : undefined;
       if (clean !== undefined) this.assertNotEmpty(clean, 'content');
 
-      // Hacemos todo en transacción
       await this.prisma.$transaction(async (tx) => {
-        // 1) Actualizar campos básicos
+        //Actualizar campos básicos
         await tx.article.update({
           where: { id },
           data: {
@@ -229,9 +225,9 @@ export class ArticlesService {
           },
         });
 
-        // 2) Si vienen tags, sincronizamos relaciones (set-like)
+        //Si vienen tags, sincronizamos relaciones
         if (dto.tags !== undefined) {
-          // Resolver/asegurar tag_ids deseados
+          //Resolver/asegurar tag_ids deseados
           const desiredTagIds: number[] = [];
           for (const t of dto.tags) {
             const ctx =
@@ -250,7 +246,7 @@ export class ArticlesService {
               ctx as any,
             );
 
-            // Buscar/crear tag para ese item + nombre
+            //Buscar/crear tag para ese item + nombre
             let tag = await tx.tag.findFirst({
               where: { name: t.name, item_id: itemId },
               select: { id: true },
@@ -264,7 +260,7 @@ export class ArticlesService {
             desiredTagIds.push(tag.id);
           }
 
-          // Estado actual
+          //Estado actual
           const current = await tx.article_tag.findMany({
             where: { article_id: id },
             select: { tag_id: true },
@@ -272,7 +268,7 @@ export class ArticlesService {
           const currentIds = new Set(current.map((x) => x.tag_id));
           const desiredIds = new Set(desiredTagIds);
 
-          // calcular diferencias
+          //calcular diferencias
           const toDelete = [...currentIds].filter((x) => !desiredIds.has(x));
           const toCreate = [...desiredIds].filter((x) => !currentIds.has(x));
 
@@ -344,7 +340,7 @@ export class ArticlesService {
     if (clean !== undefined) this.assertNotEmpty(clean, 'content');
 
     const ok = await this.prisma.$transaction(async (tx) => {
-      // 1) actualizar si es del usuario
+      //actualizar si es del usuario
       const { count } = await tx.article.updateMany({
         where: { id, author_id: userId },
         data: {
@@ -355,7 +351,7 @@ export class ArticlesService {
       });
       if (count === 0) return false;
 
-      // 2) sincronizar tags si se envían
+      //sincronizar tags si se envían
       if (dto.tags !== undefined) {
         const desiredTagIds: number[] = [];
         for (const t of dto.tags) {
@@ -425,13 +421,11 @@ export class ArticlesService {
 
   private handlePrismaError(e: any, action: string, id?: number): never {
     if (e instanceof Prisma.PrismaClientKnownRequestError) {
-      // P2025: registro no encontrado (update/delete)
       if (e.code === 'P2025') {
         throw new NotFoundException(
           `No se pudo ${action} el artículo${id ? ` con id ${id}` : ''}: no existe`,
         );
       }
-      // FK violation u otros errores de integridad
       if (e.code === 'P2003') {
         throw new BadRequestException(
           'Violación de clave foránea (¿author_id existe?).',

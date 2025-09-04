@@ -246,7 +246,6 @@ export class ReviewsService {
     take?: number;
     cursor?: number; // id de la última review recibida
   }) {
-    // Página de reviews
     const reviews = await this.prisma.review.findMany({
       where: { item_id: itemId, verified: verified ? 1 : 0 },
       include: {
@@ -291,7 +290,7 @@ export class ReviewsService {
       score: r.score,
       title: r.title,
       text: r.text,
-      created_at: r.created_at, // <- ya lo añadiste
+      created_at: r.created_at,
       user: r.user,
       upvotes: upMap.get(r.id) ?? 0,
       downvotes: downMap.get(r.id) ?? 0,

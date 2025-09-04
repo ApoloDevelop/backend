@@ -12,7 +12,7 @@ type GeniusHit = {
     full_title: string;
     title_with_featured: string;
     url: string;
-    artist_names: string; // cadena con todos los artistas
+    artist_names: string;
     primary_artist: { name: string };
   };
 };

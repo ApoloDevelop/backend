@@ -17,19 +17,16 @@ export class ActivityService {
   ) {}
 
   async create(userId: number, dto: CreateActivityDto) {
-    // Validación “un único item”
     if (!dto.itemType || !dto.name) {
       throw new BadRequestException('Faltan datos del item');
     }
 
-    // Asegura/crea item
     const { itemId } = await this.items.ensureItemByTypeAndName(
       dto.itemType as ItemType,
       dto.name,
       { artistName: dto.artistName, albumName: dto.albumName },
     );
 
-    // Crea post
     const post = await this.prisma.user_activity.create({
       data: {
         user_id: userId,
@@ -38,7 +35,6 @@ export class ActivityService {
       },
     });
 
-    // Devuelve enriquecido
     return this.hydratePosts([post]).then((arr) => arr[0]);
   }
 
@@ -71,7 +67,6 @@ export class ActivityService {
     return { ok: true };
   }
 
-  // --- Util: enriquecer con datos del item (nombre/tipo) y autor mínimo
   private async hydratePosts(posts: any[]) {
     if (posts.length === 0) return [];
 
@@ -81,7 +76,6 @@ export class ActivityService {
     });
     const itemsById = new Map(items.map((i) => [i.id, i]));
 
-    // Separa por tipo para batch queries
     const byType = {
       artist: [] as number[],
       album: [] as number[],
@@ -146,7 +140,6 @@ export class ActivityService {
       ]),
     );
 
-    // Autor mínimo
     const userIds = Array.from(new Set(posts.map((p) => p.user_id)));
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },

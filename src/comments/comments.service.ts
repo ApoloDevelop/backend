@@ -16,7 +16,6 @@ export class CommentsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  // Lista padres (paginados por cursor) + sus hijos
   async listForArticle(
     articleId: number,
     { limit = 10, cursor }: ListCommentsDto,
@@ -48,7 +47,6 @@ export class CommentsService {
     });
 
     return { data, nextCursor, hasMore, totalParents, limit: take };
-    // Nota: si quieres SSR inicial con total hijos, podemos calcularlo aparte.
   }
 
   // Crear comentario o respuesta
@@ -108,7 +106,7 @@ export class CommentsService {
     });
   }
 
-  // Borrar (hard delete). Si es padre, borra hijos primero.
+  // Borrar. Si es padre, borra hijos primero.
   async hardDelete(commentId: number, userId: number) {
     const existing = await this.prisma.comment.findUnique({
       where: { id: commentId },
@@ -130,7 +128,6 @@ export class CommentsService {
       throw new ForbiddenException('No puedes borrar este comentario.');
     }
 
-    // Si tiene hijos, bórralos primero para evitar fallo de FK
     if (existing.other_comment.length > 0) {
       await this.prisma.comment.deleteMany({ where: { parent_id: commentId } });
     }

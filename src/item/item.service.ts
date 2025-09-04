@@ -144,7 +144,7 @@ export class ItemService {
             });
           }
 
-          // vincular track ↔ album si no existe
+          // vincular track con album si no existe
           const existsTA = await tx.track_album.findFirst({
             where: { track_id: track.id, album_id: album.id },
           });

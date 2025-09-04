@@ -1,4 +1,3 @@
-// favorites/dto/favorite-body.dto.ts
 import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class FavoriteBodyDto {

@@ -1,4 +1,3 @@
-//strategies/jwt.strategy.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -11,19 +10,17 @@ type JwtPayload = { sub: number; role: number };
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly usersService: UsersService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), // "Authorization: Bearer <token>"
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwtConstants.secret, // o mejor process.env.JWT_SECRET
+      secretOrKey: jwtConstants.secret,
     });
   }
 
-  // Lo que devuelvas aquí será req.user
   async validate(payload: JwtPayload) {
     const user = await this.usersService.findUserById(payload.sub);
     if (!user) throw new UnauthorizedException('User not found');
 
-    // Devuelve una versión "safe" para meter en req.user
     const { password, ...safeUser } = user;
-    return safeUser; // => req.user
+    return safeUser;
   }
 }

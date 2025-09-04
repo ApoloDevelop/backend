@@ -18,7 +18,6 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
-  // Obtener notificaciones del usuario
   @Get()
   async findAll(
     @CurrentUser('id') userId: number,
@@ -32,13 +31,11 @@ export class NotificationsController {
     );
   }
 
-  // Obtener el número de notificaciones no leídas
   @Get('unread-count')
   async getUnreadCount(@CurrentUser('id') userId: number) {
     return this.notificationsService.getUnreadCount(userId);
   }
 
-  // Marcar notificación como leída
   @Patch(':id/read')
   async markAsRead(
     @Param('id', ParseIntPipe) id: number,
@@ -47,13 +44,11 @@ export class NotificationsController {
     return this.notificationsService.markAsRead(id, userId);
   }
 
-  // Marcar todas las notificaciones como leídas
   @Patch('mark-all-read')
   async markAllAsRead(@CurrentUser('id') userId: number) {
     return this.notificationsService.markAllAsRead(userId);
   }
 
-  // Eliminar notificación
   @Delete(':id')
   async remove(
     @Param('id', ParseIntPipe) id: number,
@@ -62,7 +57,6 @@ export class NotificationsController {
     return this.notificationsService.remove(id, userId);
   }
 
-  // Eliminar todas las notificaciones
   @Delete()
   async removeAll(@CurrentUser('id') userId: number) {
     return this.notificationsService.removeAll(userId);

@@ -129,7 +129,7 @@ export class ReviewsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(1, 2, 3, 4, 5) // cualquier user logueado puede intentar borrar; la política se aplica en el service
+  @Roles(1, 2, 3, 4, 5)
   @Delete(':id')
   removeById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
     return this.reviewsService.removeByPolicy(id, {

@@ -1,4 +1,3 @@
-// favorites/favorites.service.ts
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ItemService } from '../item/item.service';
@@ -20,7 +19,7 @@ export class FavoritesService {
     private readonly itemService: ItemService,
   ) {}
 
-  // ===== Helpers de resolución =====
+  // ===== Helpers =====
 
   /** SOLO BUSCA (no crea): devuelve itemId o null si no existe */
   private async findItemId(
@@ -57,7 +56,7 @@ export class FavoritesService {
       return track ? track.item_id : null;
     }
 
-    // venue
+    // venue (QUE NO SE USA)
     const venue = await this.prisma.venue.findFirst({
       where: { name, ...(location ? { location } : {}) },
     });
@@ -103,16 +102,19 @@ export class FavoritesService {
       location: body.location,
     });
 
-    // Si pones índice único (recomendado), cambia a upsert
-    const exists = await this.prisma.favorite.findFirst({
-      where: { user: body.userId, item_id: itemId },
-      select: { id: true },
+    await this.prisma.favorite.upsert({
+      where: {
+        uq_user_item: {
+          user: body.userId,
+          item_id: itemId,
+        },
+      },
+      update: {},
+      create: {
+        user: body.userId,
+        item_id: itemId,
+      },
     });
-    if (!exists) {
-      await this.prisma.favorite.create({
-        data: { user: body.userId, item_id: itemId },
-      });
-    }
   }
 
   async removeFavorite(query: FavContext): Promise<void> {

@@ -98,7 +98,6 @@ export class AuthService {
       oauthUser.username ?? (email ? email.split('@')[0] : oauthUser.id);
 
     if (!email) {
-      // Si el proveedor no nos da email, decide: o bien bloqueas y pides email, o creas un "pending" flow
       throw new UnauthorizedException('Email not provided by provider');
     }
 
@@ -112,7 +111,7 @@ export class AuthService {
         password: null,
         profile_pic: picture,
         role_id: 5,
-        birthdate: new Date(), // o null si no es requerido
+        birthdate: new Date(),
       });
     }
 

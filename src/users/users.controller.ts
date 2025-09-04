@@ -86,16 +86,12 @@ export class UsersController {
     return this.usersService.followUser(Number(user.id), Number(targetId));
   }
 
-  // Dejar de seguir (autenticado)
   @UseGuards(JwtAuthGuard)
   @Delete(':id/follow')
   async unfollow(@Param('id') targetId: string, @CurrentUser() user: any) {
     return this.usersService.unfollowUser(Number(user.id), Number(targetId));
   }
 
-  // Resumen: counts + relación con el viewer (si va autenticado)
-  // Si hay token, el guard no es obligatorio; pero si lo quieres opcional,
-  // crea un guard opcional. Para simplicidad, lo dejamos sin guard:
   @UseGuards(OptionalJwtAuthGuard)
   @Get(':id/follow-summary')
   async followSummary(

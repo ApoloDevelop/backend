@@ -1,6 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-// import OpenAI from 'openai';
 
 const fold = (s: string) =>
   s
@@ -217,19 +216,21 @@ export class SpotifyService {
     return null;
   }
 
-  // Nuevo método para obtener información completa del álbum
+  //método para obtener información completa del álbum
   private async getCompleteAlbumInfo(albumId: string) {
     const token = await this.getAccessToken();
-    
+
     const res = await fetch(
       `https://api.spotify.com/v1/albums/${albumId}?market=ES`,
       { headers: { Authorization: `Bearer ${token}` } },
     );
-    
+
     if (!res.ok) {
-      throw new InternalServerErrorException('Error obteniendo información completa del álbum');
+      throw new InternalServerErrorException(
+        'Error obteniendo información completa del álbum',
+      );
     }
-    
+
     return await res.json();
   }
 
@@ -385,7 +386,7 @@ export class SpotifyService {
 
     const tracks = items
       .map((i: any) => i.track)
-      .filter((t: any) => t && !t.is_local); // fuera locales/nulos
+      .filter((t: any) => t && !t.is_local); // fuera locales
 
     return {
       id: meta.id,

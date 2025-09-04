@@ -20,7 +20,6 @@ import { CreateActivityDto } from './dto/create-activity.dto';
 export class ActivityController {
   constructor(private readonly activity: ActivityService) {}
 
-  // Crear post (auth requerida)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(1, 2, 3, 4, 5)
   @Post('activity')
@@ -28,7 +27,6 @@ export class ActivityController {
     return this.activity.create(Number(user.id), dto);
   }
 
-  // Listar posts de un usuario (público)
   @Get('users/:id/activity')
   listByUser(
     @Param('id', ParseIntPipe) userId: number,
@@ -42,7 +40,6 @@ export class ActivityController {
     );
   }
 
-  // Borrar post (owner o admin/mod)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(1, 2, 3, 4, 5)
   @Delete('activity/:id')

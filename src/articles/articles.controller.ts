@@ -1,4 +1,3 @@
-// src/articles/articles.controller.ts
 import {
   Controller,
   Get,
@@ -53,7 +52,7 @@ export class ArticlesController {
     if (user.role_id === 1 || user.role_id === 2) {
       return this.articlesService.update(id, dto);
     }
-    // writer (3): solo su propio artículo
+    // solo su propio artículo
     const ok = await this.articlesService.updateOwned(id, dto, user.id);
     if (!ok) throw new ForbiddenException('No puedes editar este artículo');
     return this.articlesService.getById(id);

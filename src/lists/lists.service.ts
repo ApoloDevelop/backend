@@ -9,7 +9,7 @@ export class ListsService {
     return this.prisma.custom_list.findMany({
       where: {
         userId,
-        ...(itemType && { itemType: itemType as any }), // Cast to enum type; replace 'any' with the actual enum if available
+        ...(itemType && { itemType: itemType as any }),
       }, // Filtrar por itemType si se proporciona
       select: {
         id: true,
@@ -58,7 +58,6 @@ export class ListsService {
         'No puedes modificar listas de otro usuario',
       );
 
-    // (opcional) si tienes UNIQUE(listId,itemId), esto fallará si ya existe
     return this.prisma.custom_list_item.create({
       data: { listId, itemId },
     });
@@ -140,7 +139,6 @@ export class ListsService {
       );
     }
 
-    // Procesar los datos para incluir el nombre correcto basado en el tipo de item
     const processedList = {
       ...list,
       listItems: list.listItems.map((listItem) => {
@@ -150,13 +148,13 @@ export class ListsService {
         // Dependiendo del tipo de item, añadir el nombre desde la tabla correspondiente
         switch (item.item_type) {
           case 'artist':
-            const artist = item.artist[0]; // Tomamos el primer artista (debería ser único por item_id)
+            const artist = item.artist[0];
             if (artist) {
               processedItem.name = artist.name;
             }
             break;
           case 'album':
-            const album = item.album[0]; // Tomamos el primer álbum
+            const album = item.album[0];
             if (album) {
               processedItem.name = album.name;
               // Obtener el artista del álbum
@@ -167,9 +165,9 @@ export class ListsService {
             }
             break;
           case 'track':
-            const track = item.track[0]; // Tomamos la primera canción
+            const track = item.track[0];
             if (track) {
-              processedItem.name = track.title; // track usa 'title' en lugar de 'name'
+              processedItem.name = track.title;
               // Obtener el artista de la canción
               const trackArtist = track.track_artist?.[0]?.artist;
               if (trackArtist) {

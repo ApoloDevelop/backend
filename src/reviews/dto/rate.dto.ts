@@ -1,4 +1,3 @@
-// reviews/dto/rate.dto.ts
 import {
   IsEnum,
   IsInt,
@@ -14,7 +13,7 @@ export class RateDto {
   type!: 'artist' | 'album' | 'track' | 'venue';
 
   @IsString()
-  name!: string; // nombre del artista/álbum/track/venue
+  name!: string;
 
   @IsOptional()
   @IsInt()
@@ -33,7 +32,6 @@ export class RateDto {
   @IsString()
   title?: string;
 
-  // —— contexto para desambiguar ——
   @IsOptional()
   @IsString()
   artistName?: string; // REQUERIDO para album/track

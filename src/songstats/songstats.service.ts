@@ -70,7 +70,7 @@ export class SongstatsService {
     const audioAnalysis = json?.audio_analysis ?? [];
     const info = json?.track_info ?? json?.object_info ?? {};
 
-    // --- BPM / Key / Duration (igual que ya tenías) ---
+    // --- BPM / Key / Duration ---
     const tempo = Array.isArray(audioAnalysis)
       ? audioAnalysis.find((x: any) => String(x?.key).toLowerCase() === 'tempo')
           ?.value

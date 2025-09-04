@@ -1,4 +1,3 @@
-// item/dto/resolve-item.dto.ts
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ResolveItemDto {
@@ -10,7 +9,7 @@ export class ResolveItemDto {
 
   @IsOptional()
   @IsString()
-  artistName?: string; // req. para album/track
+  artistName?: string; // obligado para album/track
 
   @IsOptional()
   @IsString()

@@ -10,7 +10,6 @@ import { UpdateNotificationDto } from './dto/update-notification.dto';
 export class NotificationsService {
   constructor(private prisma: PrismaService) {}
 
-  // Crear una nueva notificación
   async create(createNotificationDto: CreateNotificationDto) {
     return this.prisma.notification.create({
       data: createNotificationDto,
@@ -102,7 +101,6 @@ export class NotificationsService {
     });
   }
 
-  // Obtener notificaciones de un usuario
   async findByUserId(userId: number, page: number = 1, limit: number = 20) {
     const skip = (page - 1) * limit;
 
@@ -209,7 +207,6 @@ export class NotificationsService {
     };
   }
 
-  // Obtener el número de notificaciones no leídas
   async getUnreadCount(userId: number) {
     return this.prisma.notification.count({
       where: {
@@ -219,7 +216,6 @@ export class NotificationsService {
     });
   }
 
-  // Marcar notificación como leída
   async markAsRead(id: number, userId: number) {
     return this.prisma.notification.updateMany({
       where: {
@@ -232,7 +228,6 @@ export class NotificationsService {
     });
   }
 
-  // Marcar todas las notificaciones como leídas
   async markAllAsRead(userId: number) {
     return this.prisma.notification.updateMany({
       where: {
@@ -245,7 +240,6 @@ export class NotificationsService {
     });
   }
 
-  // Eliminar notificación
   async remove(id: number, userId: number) {
     return this.prisma.notification.deleteMany({
       where: {
@@ -255,7 +249,6 @@ export class NotificationsService {
     });
   }
 
-  // Eliminar todas las notificaciones de un usuario
   async removeAll(userId: number) {
     return this.prisma.notification.deleteMany({
       where: {
@@ -266,7 +259,6 @@ export class NotificationsService {
 
   // Métodos para crear notificaciones específicas
 
-  // Método helper para obtener el nombre del item según su tipo
   private getItemName(item: any): string {
     switch (item.item_type) {
       case 'artist':

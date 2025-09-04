@@ -1,4 +1,3 @@
-// src/articles/dto/create-article.dto.ts
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -21,11 +20,11 @@ class TagInputDto {
 
   @IsOptional()
   @IsString()
-  artistName?: string; // requerido para album/track en tu ItemService
+  artistName?: string;
 
   @IsOptional()
   @IsString()
-  albumName?: string; // requerido para track en tu ItemService
+  albumName?: string;
 }
 
 export class CreateArticleDto {

@@ -90,7 +90,7 @@ export class UsersService {
       throw new BadRequestException('Usuario no encontrado');
     }
 
-    // Eliminar el usuario y todas sus relaciones (Prisma se encarga de las relaciones en cascada)
+    // Eliminar el usuario y todas sus relaciones
     await this.prisma.user.delete({
       where: { id: userId },
     });

@@ -1,10 +1,8 @@
-// src/common/sanitize/sanitize.util.ts
 let _sanitizeFn: ((dirty: string, opts: any) => string) | null = null;
 
 async function loadSanitizeFn() {
   if (_sanitizeFn) return _sanitizeFn;
 
-  // Import dinámico (ESM). En CJS devuelve namespace con .default
   const mod: any = await import('sanitize-html');
 
   const candidate =
@@ -12,15 +10,13 @@ async function loadSanitizeFn() {
       ? mod
       : typeof mod?.default === 'function'
         ? mod.default
-        : // algunos toolchains exponen también mod.sanitize / mod.sanitizeHtml
-          typeof mod?.sanitize === 'function'
+        : typeof mod?.sanitize === 'function'
           ? mod.sanitize
           : typeof mod?.sanitizeHtml === 'function'
             ? mod.sanitizeHtml
             : null;
 
   if (!candidate) {
-    // imprime qué llegó para depurar rápido
     const keys = Object.keys(mod || {});
     throw new Error(
       `sanitize-html import no expone una función (recibido: { ${keys.join(', ')} })`,
@@ -31,11 +27,7 @@ async function loadSanitizeFn() {
   return _sanitizeFn;
 }
 
-const ALLOWED_IMG_HOSTS = new Set([
-  'localhost',
-  // añade tus hosts de media
-  'res.cloudinary.com',
-]);
+const ALLOWED_IMG_HOSTS = new Set(['localhost', 'res.cloudinary.com']);
 
 const OPTIONS = {
   allowedTags: [
