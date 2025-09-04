@@ -5,7 +5,8 @@ export class MusicbrainzService {
   private UA: string;
 
   constructor() {
-    this.UA = `Apolo/1.0 (apolo@gmail.com)`;
+    this.UA =
+      process.env.USER_AGENT || 'ApoloMusic/1.0 ( https://apolomusic.com )';
   }
 
   private async searchByName(name: string, limit = 20) {
