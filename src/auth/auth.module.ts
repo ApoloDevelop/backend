@@ -10,11 +10,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from './guard/optional-jwt-auth.guard';
 import { RolesGuard } from './guard/roles.guard';
+import { EmailService } from '../email/email.service';
 
 @Module({
   controllers: [AuthController],
   providers: [
     AuthService,
+    EmailService,
     GoogleStrategy,
     SpotifyStrategy,
     JwtStrategy,

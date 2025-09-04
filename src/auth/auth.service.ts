@@ -5,15 +5,20 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 import * as bcryptjs from 'bcryptjs';
+import * as crypto from 'crypto';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { EmailService } from '../email/email.service';
 @Injectable()
 export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
+    private readonly emailService: EmailService,
   ) {}
 
   private sanitizeUser<T extends { password?: any }>(user: T) {
@@ -114,5 +119,59 @@ export class AuthService {
     const payload = { sub: user.id, role: user.role_id };
     const token = await this.jwtService.signAsync(payload, { expiresIn: '1d' });
     return { user: this.sanitizeUser(user), token };
+  }
+
+  //-----------FORGOT PASSWORD-------------------
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const { email } = forgotPasswordDto;
+
+    // Buscar usuario por email
+    const user = await this.usersService.findUserByEmail(email);
+    if (!user) {
+      throw new BadRequestException('No existe una cuenta con ese email');
+    }
+
+    // Generar token de reset
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hora desde ahora
+
+    // Guardar token en la base de datos
+    await this.usersService.updateUser(user.id, {
+      reset_password_token: resetToken,
+      reset_password_expires: resetTokenExpires,
+    });
+
+    // Enviar email
+    await this.emailService.sendPasswordResetEmail(email, resetToken);
+
+    return { message: 'Se ha enviado un email de recuperación a tu correo' };
+  }
+
+  //-----------RESET PASSWORD-------------------
+  async resetPassword(resetPasswordDto: ResetPasswordDto) {
+    const { token, password } = resetPasswordDto;
+
+    // Buscar usuario por token
+    const user = await this.usersService.findUserByResetToken(token);
+    if (!user) {
+      throw new BadRequestException('Token de recuperación inválido');
+    }
+
+    // Verificar que el token no haya expirado
+    if (user.reset_password_expires < new Date()) {
+      throw new BadRequestException('El token de recuperación ha expirado');
+    }
+
+    // Hash de la nueva contraseña
+    const hashedPassword = await bcryptjs.hash(password, 10);
+
+    // Actualizar contraseña y limpiar tokens de reset
+    await this.usersService.updateUser(user.id, {
+      password: hashedPassword,
+      reset_password_token: null,
+      reset_password_expires: null,
+    });
+
+    return { message: 'Contraseña actualizada exitosamente' };
   }
 }

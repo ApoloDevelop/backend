@@ -336,6 +336,8 @@ model user {
   register_date                   DateTime        @default(now()) @db.Timestamp(0)
   verified                        Boolean         @default(false)
   role_id                         Int             @default(5)
+  reset_password_token            String?         @db.VarChar(255)
+  reset_password_expires          DateTime?       @db.Timestamp(0)
   social_genre                    user_genre?
   article                         article[]
   comment                         comment[]

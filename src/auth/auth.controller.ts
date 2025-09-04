@@ -10,6 +10,8 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
@@ -63,5 +65,17 @@ export class AuthController {
     return res.redirect(
       `${process.env.FRONTEND_URL}/oauth-success?token=${token}`,
     );
+  }
+
+  //Forgot Password route
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  //Reset Password route
+  @Post('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 }

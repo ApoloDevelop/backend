@@ -289,4 +289,21 @@ export class UsersService {
       ],
     });
   }
+
+  // Método para actualizar usuario (simple)
+  async updateUser(id: number, data: Partial<User>): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
+
+  // Método para buscar usuario por token de reset
+  async findUserByResetToken(token: string): Promise<User | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        reset_password_token: token,
+      },
+    });
+  }
 }
