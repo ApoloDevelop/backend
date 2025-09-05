@@ -24,7 +24,6 @@ export class GeoService {
       limit: '1',
     });
     const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
-    console.log('Geocoding URL:', url);
     const res = await fetch(url, {
       headers: { 'User-Agent': this.userAgent },
     });

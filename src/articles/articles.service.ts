@@ -140,7 +140,6 @@ export class ArticlesService {
   async create(dto: CreateArticleDto) {
     try {
       const clean = await sanitizeQuill(dto.content || '');
-      console.log('Sanitized content:', clean);
       this.assertNotEmpty(clean, 'content');
       return await this.prisma.$transaction(async (tx) => {
         //crear artículo

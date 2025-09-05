@@ -193,9 +193,7 @@ export class SongstatsService {
       }),
     );
 
-    const linksRaw = Array.isArray(artistInfo?.links)
-      ? artistInfo.links
-      : [];
+    const linksRaw = Array.isArray(artistInfo?.links) ? artistInfo.links : [];
 
     const links: SongstatsArtistLink[] = linksRaw.map((link: any) => ({
       source: link?.source ?? '',
