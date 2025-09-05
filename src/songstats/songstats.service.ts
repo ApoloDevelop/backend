@@ -20,10 +20,17 @@ export interface SongstatsRelatedArtist {
   avatar: string | null;
 }
 
+export interface SongstatsArtistLink {
+  source: string;
+  external_id: string;
+  url: string;
+}
+
 export interface SongstatsArtistInfo {
   bio: string | null;
   genres: string[];
   related_artists: SongstatsRelatedArtist[];
+  links: SongstatsArtistLink[];
 }
 
 export interface SongstatsEvent {
@@ -186,7 +193,17 @@ export class SongstatsService {
       }),
     );
 
-    return { bio, genres, related_artists };
+    const linksRaw = Array.isArray(artistInfo?.links)
+      ? artistInfo.links
+      : [];
+
+    const links: SongstatsArtistLink[] = linksRaw.map((link: any) => ({
+      source: link?.source ?? '',
+      external_id: link?.external_id ?? '',
+      url: link?.url ?? '',
+    }));
+
+    return { bio, genres, related_artists, links };
   }
 
   async getArtistInfo(spotifyArtistId: string): Promise<SongstatsArtistInfo> {
