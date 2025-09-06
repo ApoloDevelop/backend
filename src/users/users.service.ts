@@ -76,10 +76,6 @@ export class UsersService {
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
-
   async deleteUser(userId: number) {
     // Verificar que el usuario existe
     const user = await this.prisma.user.findUnique({

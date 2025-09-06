@@ -1,99 +1,220 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# APOLO Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 📋 Descripción General
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+APOLO es una aplicación backend desarrollada con **NestJS** que proporciona una API RESTful para una plataforma de música social. El sistema permite a los usuarios descubrir música, crear reseñas, gestionar listas de reproducción, y socializar alrededor del contenido musical.
 
-## Description
+## 🏗️ Arquitectura General
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Stack Tecnológico
 
-## Project setup
+- **Framework**: NestJS (Node.js)
+- **Base de Datos**: MySQL con Prisma ORM
+- **Autenticación**: JWT + OAuth (Google, Spotify, Apple)
+- **Almacenamiento de archivos**: Cloudinary
+- **Validación**: class-validator + class-transformer
+- **APIs Externas**: Spotify, MusicBrainz, Genius, OpenAI
 
-```bash
-$ npm install
+### Estructura del Proyecto
+
+```
+src/
+├── main.ts                 # Punto de entrada de la aplicación
+├── app.module.ts           # Módulo raíz que importa todos los módulos
+├── auth/                   # Autenticación y autorización
+├── users/                  # Gestión de usuarios
+├── prisma/                 # Configuración de Prisma ORM
+├── activity/               # Sistema de actividad de usuarios
+├── articles/               # Gestión de artículos/noticias
+├── cloudinary/             # Integración con Cloudinary
+├── comments/               # Sistema de comentarios
+├── email/                  # Servicio de correo electrónico
+├── favorites/              # Gestión de favoritos
+├── genius/                 # Integración con Genius API
+├── geo/                    # Servicios geográficos
+├── item/                   # Entidades musicales (álbumes, canciones, artistas)
+├── lists/                  # Listas de reproducción personalizadas
+├── musicbrainz/           # Integración con MusicBrainz API
+├── notifications/          # Sistema de notificaciones
+├── reviews/               # Sistema de reseñas y calificaciones
+├── songstats/             # Estadísticas de canciones
+├── spotify/               # Integración con Spotify API
+└── common/                # Utilidades compartidas
 ```
 
-## Compile and run the project
+## 🔧 Componentes Principales
 
-```bash
-# development
-$ npm run start
+### 1. **Módulo de Autenticación (`auth/`)**
 
-# watch mode
-$ npm run start:dev
+- **Propósito**: Gestiona el registro, login y autenticación de usuarios
+- **Características**:
+  - Autenticación JWT
+  - OAuth con Google, Spotify y Apple
+  - Reset de contraseñas por email
+  - Guards para proteger rutas
+  - Decoradores personalizados para roles
 
-# production mode
-$ npm run start:prod
+### 2. **Módulo de Usuarios (`users/`)**
+
+- **Propósito**: CRUD de usuarios y gestión de perfiles
+- **Características**:
+  - Perfiles de usuario completos
+  - Configuraciones de privacidad
+  - Información social (género, biografía, enlaces)
+  - Geolocalización
+
+### 3. **Módulo de Items (`item/`)**
+
+- **Propósito**: Gestión de entidades musicales
+- **Características**:
+  - Álbumes, canciones y artistas
+  - Resolución de metadatos musicales
+  - Integración con APIs externas
+
+### 4. **Módulo de Reseñas (`reviews/`)**
+
+- **Propósito**: Sistema de calificaciones y reseñas
+- **Características**:
+  - Calificaciones numéricas
+  - Reseñas textuales
+  - Estadísticas agregadas
+
+### 5. **Módulo de Listas (`lists/`)**
+
+- **Propósito**: Listas de reproducción personalizadas
+- **Características**:
+  - Creación y gestión de listas
+  - Compartir listas públicas/privadas
+  - Colaboración en listas
+
+### 6. **Módulo de Favoritos (`favorites/`)**
+
+- **Propósito**: Sistema de marcado como favorito
+- **Características**:
+  - Favoritos de canciones, álbumes y artistas
+  - Gestión de favoritos por usuario
+
+### 7. **Módulo de Artículos (`articles/`)**
+
+- **Propósito**: Gestión de artículos y noticias musicales
+- **Características**:
+  - Publicación de artículos por usuarios autorizados
+  - Sistema de etiquetas (tags)
+  - Comentarios en artículos
+  - Contador de visualizaciones
+  - Gestión de imágenes asociadas
+
+### 8. **Integraciones Externas**
+
+- **Spotify** (`spotify/`): Búsqueda de música, metadatos, autenticación OAuth
+- **MusicBrainz** (`musicbrainz/`): Base de datos abierta de música
+- **Genius** (`genius/`): Letras de canciones y información adicional
+- **Cloudinary** (`cloudinary/`): Almacenamiento y procesamiento de imágenes
+
+## 🗄️ Base de Datos
+
+### Modelo de Datos Principal
+
+```
+User (usuarios)
+├── Articles (artículos/noticias)
+├── Reviews (reseñas)
+├── Lists (listas de reproducción)
+├── Favorites (favoritos)
+├── Comments (comentarios)
+├── Activity (actividad)
+└── Notifications (notificaciones)
+
+Item (entidades musicales)
+├── Album
+├── Song
+├── Artist
+└── Genre
 ```
 
-## Run tests
+### Tecnología de Base de Datos
 
-```bash
-# unit tests
-$ npm run test
+- **ORM**: Prisma
+- **Motor**: MySQL
+- **Migraciones**: Gestionadas con Prisma Migrate
+- **Generación de tipos**: Automática con Prisma Client
 
-# e2e tests
-$ npm run test:e2e
+## 🔐 Seguridad
 
-# test coverage
-$ npm run test:cov
-```
+### Autenticación
 
-## Deployment
+- **JWT Tokens**: Para autenticación stateless
+- **OAuth 2.0**: Integración con proveedores externos
+- **Password Hashing**: bcryptjs para hash seguro de contraseñas
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Autorización
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- **Guards**: Protección de rutas sensibles
+- **Roles**: Sistema de roles y permisos
+- **Decoradores**: `@CurrentUser()`, `@Roles()` para facilitar el control de acceso
 
-```bash
-$ npm install -g mau
-$ mau deploy
-```
+### Validación
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- **DTOs**: Data Transfer Objects con validación automática
+- **Pipes**: Validación global con `ValidationPipe`
+- **Sanitización**: Limpieza de datos de entrada
 
-## Resources
+## 🌐 APIs y Servicios
 
-Check out a few resources that may come in handy when working with NestJS:
+### Endpoints Principales
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- `/auth/*` - Autenticación y registro
+- `/users/*` - Gestión de usuarios
+- `/items/*` - Entidades musicales
+- `/reviews/*` - Reseñas y calificaciones
+- `/lists/*` - Listas de reproducción
+- `/favorites/*` - Favoritos
+- `/articles/*` - Artículos y noticias
+- `/comments/*` - Comentarios
+- `/notifications/*` - Notificaciones
 
-## Support
+### Configuración CORS
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- Habilitado para todos los orígenes
+- Soporte para credenciales
+- Configurado para desarrollo y producción
 
-## Stay in touch
+## 📁 Patrones de Diseño
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Arquitectura Modular
 
-## License
+- Cada funcionalidad está encapsulada en su propio módulo
+- Separación clara de responsabilidades
+- Reutilización de código mediante servicios compartidos
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Dependency Injection
+
+- Inyección de dependencias nativa de NestJS
+- Servicios singleton para optimización
+- Fácil testing mediante mocking
+
+### DTO Pattern
+
+- Data Transfer Objects para validación de entrada
+- Transformación automática de datos
+- Documentación implícita de la API
+
+## 📈 Características Destacadas
+
+- **Escalabilidad**: Arquitectura modular preparada para crecimiento
+- **Mantenibilidad**: Código bien estructurado y documentado
+- **Rendimiento**: Optimizaciones de consultas y caché
+- **Flexibilidad**: APIs bien diseñadas y extensibles
+- **Observabilidad**: Logging y manejo de errores robusto
+
+## 🔄 Flujo de Datos Típico
+
+1. **Cliente** realiza petición HTTP
+2. **Guards** validan autenticación/autorización
+3. **Controllers** reciben y validan datos (DTOs)
+4. **Services** implementan lógica de negocio
+5. **Prisma** gestiona acceso a base de datos
+6. **APIs externas** proporcionan datos adicionales
+7. **Response** formateada y enviada al cliente
+
+Esta arquitectura proporciona una base sólida, escalable y mantenible para el desarrollo de la plataforma APOLO.

@@ -75,9 +75,39 @@ export class UsersController {
     return this.usersService.createUser(createUserDto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  async update(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    console.log(user);
+    // Solo el propio usuario puede actualizar su perfil
+    const targetUserId = Number(id);
+    const currentUserId = Number(user.id);
+    if (targetUserId !== currentUserId) {
+      throw new NotFoundException('No tienes permisos para editar este perfil');
+    }
+
+    return this.usersService.update(targetUserId, updateUserDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  async deleteUser(@Param('id') id: string, @CurrentUser() user: any) {
+    const targetUserId = Number(id);
+    const currentUserId = Number(user.id);
+    const isAdmin = user.role_id === 1;
+
+    // Solo el propio usuario puede eliminar su cuenta, o un administrador puede eliminar cualquier cuenta
+    if (targetUserId !== currentUserId && !isAdmin) {
+      throw new NotFoundException(
+        'No tienes permisos para eliminar esta cuenta',
+      );
+    }
+
+    return this.usersService.deleteUser(targetUserId);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -134,22 +164,5 @@ export class UsersController {
       Number(take),
       user ? Number(user.id) : null,
     );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Delete(':id')
-  async deleteUser(@Param('id') id: string, @CurrentUser() user: any) {
-    const targetUserId = Number(id);
-    const currentUserId = Number(user.id);
-    const isAdmin = user.role_id === 1;
-
-    // Solo el propio usuario puede eliminar su cuenta, o un administrador puede eliminar cualquier cuenta
-    if (targetUserId !== currentUserId && !isAdmin) {
-      throw new NotFoundException(
-        'No tienes permisos para eliminar esta cuenta',
-      );
-    }
-
-    return this.usersService.deleteUser(targetUserId);
   }
 }
