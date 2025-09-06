@@ -82,7 +82,6 @@ export class UsersController {
     @CurrentUser() user: any,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    console.log(user);
     // Solo el propio usuario puede actualizar su perfil
     const targetUserId = Number(id);
     const currentUserId = Number(user.id);
