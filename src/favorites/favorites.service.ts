@@ -9,6 +9,7 @@ type FavContext = {
   type: FavType;
   name: string;
   artistName?: string;
+  albumName?: string;
   location?: string;
 };
 
@@ -25,7 +26,7 @@ export class FavoritesService {
   private async findItemId(
     ctx: Omit<FavContext, 'userId'>,
   ): Promise<number | null> {
-    const { type, name, artistName, location } = ctx;
+    const { type, name, artistName, albumName, location } = ctx;
 
     if (type === 'artist') {
       const artist = await this.prisma.artist.findFirst({ where: { name } });
@@ -51,6 +52,15 @@ export class FavoritesService {
         where: {
           title: name,
           track_artist: { some: { artist: { name: artistName } } },
+          ...(albumName
+            ? {
+                track_album: {
+                  some: {
+                    album: { name: albumName },
+                  },
+                },
+              }
+            : {}),
         },
       });
       return track ? track.item_id : null;
@@ -66,10 +76,11 @@ export class FavoritesService {
   private async resolveOrCreateItemId(
     ctx: Omit<FavContext, 'userId'>,
   ): Promise<number> {
-    const { type, name, artistName, location } = ctx;
+    const { type, name, artistName, albumName, location } = ctx;
 
     const result = await this.itemService.ensureItemByTypeAndName(type, name, {
       artistName,
+      albumName,
       location,
     });
 
@@ -84,6 +95,7 @@ export class FavoritesService {
       type: query.type,
       name: query.name,
       artistName: query.artistName,
+      albumName: query.albumName,
       location: query.location,
     });
     if (!itemId) return false;
@@ -99,6 +111,7 @@ export class FavoritesService {
       type: body.type,
       name: body.name,
       artistName: body.artistName,
+      albumName: body.albumName,
       location: body.location,
     });
 
@@ -122,6 +135,7 @@ export class FavoritesService {
       type: query.type,
       name: query.name,
       artistName: query.artistName,
+      albumName: query.albumName,
       location: query.location,
     });
     if (!itemId) return; // nada que borrar

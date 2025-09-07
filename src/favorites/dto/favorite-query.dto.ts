@@ -19,5 +19,9 @@ export class FavoriteQueryDto {
 
   @IsOptional()
   @IsString()
+  albumName?: string; // requerido para track
+
+  @IsOptional()
+  @IsString()
   location?: string; // para venue
 }

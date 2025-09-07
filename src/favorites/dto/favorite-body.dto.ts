@@ -17,5 +17,9 @@ export class FavoriteBodyDto {
 
   @IsOptional()
   @IsString()
+  albumName?: string;
+
+  @IsOptional()
+  @IsString()
   location?: string;
 }

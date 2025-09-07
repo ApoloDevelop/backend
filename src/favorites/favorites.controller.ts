@@ -33,6 +33,7 @@ export class FavoritesController {
       type: query.type,
       name: query.name,
       artistName: query.artistName,
+      albumName: query.albumName,
       location: query.location,
     });
     return { isFavorite };
@@ -58,6 +59,7 @@ export class FavoritesController {
       type: body.type,
       name: body.name,
       artistName: body.artistName,
+      albumName: body.albumName,
       location: body.location,
     });
     return { ok: true };
@@ -76,6 +78,7 @@ export class FavoritesController {
       type: query.type,
       name: query.name,
       artistName: query.artistName,
+      albumName: query.albumName,
       location: query.location,
     });
   }
