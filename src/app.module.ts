@@ -16,6 +16,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CommentsModule } from './comments/comments.module';
 import { ActivityModule } from './activity/activity.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ConcertsModule } from './concerts/concerts.module';
+import { GeoModule } from './geo/geo.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { NotificationsModule } from './notifications/notifications.module';
     CommentsModule,
     ActivityModule,
     NotificationsModule,
+    ConcertsModule,
+    GeoModule,
   ],
 })
 export class AppModule {}
