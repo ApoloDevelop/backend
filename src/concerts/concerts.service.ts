@@ -218,6 +218,50 @@ export class ConcertsService {
     return promise;
   }
 
+  // Lightweight variant for the artist-page sidebar: only upcoming events,
+  // which already include their venues inline. No past events and no per-venue
+  // enrichment, so it costs ~2 requests (~1s) instead of ~16 (~9s).
+  async getArtistUpcomingInfo(
+    artistName: string,
+  ): Promise<ConcertsArtistEventInfo> {
+    const key = `upcoming:${artistName.toLowerCase().trim()}`;
+    const cached = this.cache.get(key);
+    if (cached && cached.expires > Date.now()) return cached.promise;
+
+    const promise = this.computeArtistUpcomingInfo(artistName);
+    this.cache.set(key, { promise, expires: Date.now() + this.CACHE_TTL_MS });
+    promise.catch(() => this.cache.delete(key));
+    return promise;
+  }
+
+  private async computeArtistUpcomingInfo(
+    artistName: string,
+  ): Promise<ConcertsArtistEventInfo> {
+    const artist = await this.searchArtistId(artistName);
+    if (!artist) return EMPTY_RESULT;
+
+    const upcomingResult = await this.fetchArtistEvents(artist.id);
+    const venueMap: Record<number, any> = Object.fromEntries(
+      (upcomingResult.venues ?? []).map((v: any) => [v.id, v]),
+    );
+
+    const upcoming = this.normalizeEvents(upcomingResult.events ?? [], venueMap);
+    const cities = new Set(upcoming.map((e) => e.city).filter(Boolean));
+    const countries = new Set(
+      upcoming.map((e) => e.countryCode).filter(Boolean),
+    );
+
+    return {
+      counts: {
+        citiesUpcoming: cities.size,
+        countriesUpcoming: countries.size,
+        eventsUpcoming: upcoming.length,
+      },
+      upcoming,
+      past: [],
+    };
+  }
+
   private async computeArtistEventInfo(
     artistName: string,
   ): Promise<ConcertsArtistEventInfo> {
