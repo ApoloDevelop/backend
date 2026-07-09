@@ -11,12 +11,13 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { ListsModule } from './lists/lists.module';
 import { SongstatsModule } from './songstats/songstats.module';
 import { GeniusModule } from './genius/genius.module';
-import { GeoModule } from './geo/geo.module';
 import { ArticlesModule } from './articles/articles.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CommentsModule } from './comments/comments.module';
 import { ActivityModule } from './activity/activity.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ConcertsModule } from './concerts/concerts.module';
+import { GeoModule } from './geo/geo.module';
 
 @Module({
   imports: [
@@ -32,12 +33,13 @@ import { NotificationsModule } from './notifications/notifications.module';
     ListsModule,
     SongstatsModule,
     GeniusModule,
-    GeoModule,
     ArticlesModule,
     CloudinaryModule,
     CommentsModule,
     ActivityModule,
     NotificationsModule,
+    ConcertsModule,
+    GeoModule,
   ],
 })
 export class AppModule {}
